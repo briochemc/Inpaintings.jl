@@ -1,0 +1,6 @@
+authors = ["Benoit Pasquier <pasquieb@uci.edu>"]
+name = "Inpaintings"
+uuid = "e44e3972-f375-11e8-12a4-bbfab0a641fe"
+version = "0.1.0"
+
+[deps]
