@@ -126,7 +126,7 @@ end
 
 Inpaints `NaN` values by solving a diffusion PDE for a diagonally filled Laplacian:
 ```math
-\mathbf{D}_{xy}^{2} = \begin{bmatrix}0.25&0.5&0.25\\0.5&-3&0.5\\0.25&0.5&0.25\end{bmatrix}
+\\mathbf{D}_{xy}^{2} = \\begin{bmatrix}0.25&0.5&0.25\\\\0.5&-3&0.5\\\\0.25&0.5&0.25\\end{bmatrix}
 ```
 Inspired by MATLAB's `inpaint_nans`'s method `0` for matrices (by John d'Errico).
 See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
