@@ -185,5 +185,96 @@ function inpaint_nans_method6(A::Array{T,2}) where T
     return B
 end
 
+"""
+    inpaint_nans_method3(A::Array{T,2}) where T
+
+Inpaints `NaN` values by solving a diffusion PDE for ∇⁴:
+Inspired by MATLAB's `inpaint_nans`'s method `3` for matrices (by John d'Errico).
+The discrete stencil used for ∇⁴ looks like
+```
+            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 2 ├─┤-8 ├─┤ 2 │
+      └─┬─┘ └─┬─┘ └─┬─┘
+        │     │     │
+┌───┐ ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ ┌───┐
+│ 1 ├─┤-8 ├─┤20 ├─┤-8 ├─┤ 1 │
+└───┘ └─┬─┘ └─┬─┘ └─┬─┘ └───┘
+        │     │     │
+      ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+      │ 2 ├─┤-8 ├─┤ 2 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘
+```
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+"""
+function inpaint_nans_method3(A::Array{T,2}) where T
+    Inan = findall(@. isnan(A))
+    Inotnan = findall(@. !isnan(A))
+
+    # direct and diagonal neighbors
+    N0 = CartesianIndex(0, 0)
+    N1 = CartesianIndex(1, 0)
+    N2 = CartesianIndex(0, 1)
+    neighbors_tmp = (N0, N1, N2, -N1, -N2)
+    neighbors = sort(unique([n1 + n2 for n1 in neighbors_tmp, n2 in neighbors_tmp if n1 + n2 ≠ N0]))
+
+    # list of strict neighbors
+    R = CartesianIndices(size(A))
+    Ineighbors = list_neighbors(R, Inan, neighbors)
+
+    # list of all nodes we have identified
+    Iwork = [Inan; Ineighbors]
+    # Remove borders (Von-Neuman boundary)
+    R₂ = CartesianIndices(size(A) .- 4)
+    R₂ = [r₂ + 2first(R₂) for r₂ in R₂]
+    Iwork = [w for w in Iwork if w ∈ R₂]
+    # Sort it (not sure the sorting is required)
+    Iwork = sort(Iwork)
+    nw = length(Iwork)
+    u = collect(1:nw)
+
+    # Use Linear indices to generate the sparse Laplacian
+    iwork = LinearIndices(size(A))[Iwork]
+    n1 = LinearIndices(size(A))[first(R) + N1] - LinearIndices(size(A))[first(R)]
+    n2 = LinearIndices(size(A))[first(R) + N2] - LinearIndices(size(A))[first(R)]
+
+    nfirst = [n1, n2, -n1, -n2] # direct neihgbors
+    ndiag = [n1 + n2, n1 - n2, -n1 + n2, -n1 - n2] # diag neighbors
+    nsecond = 2nfirst # second neighbors in straight lines
+
+    # Build the Laplacian (not the fastest way but easier-to-read code)
+    Δ =  sparse(u, iwork      , +20.0, nw, length(A))
+    for n in nfirst
+        Δ += sparse(u, iwork .+ n, -8.0, nw, length(A))
+    end
+    for n in ndiag
+        Δ += sparse(u, iwork .+ n, +2.0, nw, length(A))
+    end
+    for n in nsecond
+        Δ += sparse(u, iwork .+ n, +1.0, nw, length(A))
+    end
+
+    # Use Linear indices to access the sparse Laplacian
+    inan = LinearIndices(size(A))[Inan]
+    inotnan = LinearIndices(size(A))[Inotnan]
+
+    # knowns to right hand side
+    rhs = -Δ[:, inotnan] * A[inotnan]
+
+    # and solve...
+    B = copy(A)
+    B[inan] .= Δ[:, inan] \ rhs
+    return B
+end
+
+
+
 export inpaint_nans
 
