@@ -10,6 +10,7 @@ function inpaint_nans(A, method=0)
     # TODO add other methods from John d'Errico's MATLAB's `inpaint_nans`.
     return @match method begin
         0 => inpaint_nans_method0(A)
+        3 => inpaint_nans_method3(A)
         6 => inpaint_nans_method6(A)
         _ => error("Method $method not available yet. Suggest it on Github!")
     end
