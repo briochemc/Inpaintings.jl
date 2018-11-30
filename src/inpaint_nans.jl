@@ -1,554 +1,121 @@
 """
-    inpaint_nans(A, method = 0)
+    inpaint_nans(A, method=0)
 
-In-paints over nans in an array
-# TODO: Julia-ify the doc below
-usage: B=INPAINT_NANS(A)          # default method
-usage: B=INPAINT_NANS(A,method)   # specify method used
-
-Solves approximation to one of several pdes to
-interpolate and extrapolate holes in an array
-
-arguments (input):
-  A - nxm array with some NaNs to be filled in
-
-  method - (OPTIONAL) scalar numeric flag - specifies
-      which approach (or physical metaphor to use
-      for the interpolation.) All methods are capable
-      of extrapolation, some are better than others.
-      There are also speed differences, as well as
-      accuracy differences for smooth surfaces.
-
-      methods {0,1,2} use a simple plate metaphor.
-      method  3 uses a better plate equation,
-                but may be much slower and uses
-                more memory.
-      method  4 uses a spring metaphor.
-      method  5 is an 8 neighbor average, with no
-                rationale behind it compared to the
-                other methods. I do not recommend
-                its use.
-
-      method == 0 --> (DEFAULT) see method 1, but
-        this method does not build as large of a
-        linear system in the case of only a few
-        NaNs in a large array.
-        Extrapolation behavior is linear.
-
-      method == 1 --> simple approach, applies del^2
-        over the entire array, then drops those parts
-        of the array which do not have any contact with
-        NaNs. Uses a least squares approach, but it
-        does not modify known values.
-        In the case of small arrays, this method is
-        quite fast as it does very little extra work.
-        Extrapolation behavior is linear.
-
-      method == 2 --> uses del^2, but solving a direct
-        linear system of equations for nan elements.
-        This method will be the fastest possible for
-        large systems since it uses the sparsest
-        possible system of equations. Not a least
-        squares approach, so it may be least robust
-        to noise on the boundaries of any holes.
-        This method will also be least able to
-        interpolate accurately for smooth surfaces.
-        Extrapolation behavior is linear.
-
-        Note: method 2 has problems in 1-d, so this
-        method is disabled for vector inputs.
-
-      method == 3 --+ See method 0, but uses del^4 for
-        the interpolating operator. This may result
-        in more accurate interpolations, at some cost
-        in speed.
-
-      method == 4 --+ Uses a spring metaphor. Assumes
-        springs (with a nominal length of zero)
-        connect each node with every neighbor
-        (horizontally, vertically and diagonally)
-        Since each node tries to be like its neighbors,
-        extrapolation is as a constant function where
-        this is consistent with the neighboring nodes.
-
-      method == 5 --+ See method 2, but use an average
-        of the 8 nearest neighbors to any element.
-        This method is NOT recommended for use.
-
-
-arguments (output):
-  B - nxm array with NaNs replaced
-
-
-Example:
- [x,y] = meshgrid(0:.01:1)
- z0 = exp(x+y)
- znan = z0
- znan(20:50,40:70) = NaN
- znan(30:90,5:10) = NaN
- znan(70:75,40:90) = NaN
-
- z = inpaint_nans(znan)
-
-
-See also: griddata, interp1
-
-Author: John D'Errico
-e-mail address: woodchips@rochester.rr.com
-Release: 2
-Release date: 4/15/06
+Inpaints `NaN` values by solving a diffusion PDE for the standard Laplacian.
+Inspired by MATLAB's `inpaint_nans`'s (by John d'Errico).
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+Currently only method `0` is implemented.
 """
-function identify_neighbors(n, m, iunknown, talks_to)
-    # identify_neighbors: identifies all the neighbors of
-    #   those nodes in nan_list, not including the nans
-    #   themselves
-    #
-    # arguments (input):
-    #  n,m - scalar - [n,m]=size(A), where A is the
-    #      array to be interpolated
-    #  nan_list - array - list of every nan element in A
-    #      nan_list(i,1) == linear index of i'th nan element
-    #      nan_list(i,2) == row index of i'th nan element
-    #      nan_list(i,3) == column index of i'th nan element
-    #  talks_to - px2 array - defines which nodes communicate
-    #      with each other, i.e., which nodes are neighbors.
-    #
-    #      talks_to(i,1) - defines the offset in the row
-    #                      dimension of a neighbor
-    #      talks_to(i,2) - defines the offset in the column
-    #                      dimension of a neighbor
-    #
-    #      For example, talks_to = [-1 0;0 -1;1 0;0 1]
-    #      means that each node talks only to its immediate
-    #      neighbors horizontally and vertically.
-    #
-    # arguments(output):
-    #  neighbors_list - array - list of all neighbors of
-    #      all the nodes in nan_list
-    
-    # If indices of unknowns is empty then return empty list of neighbors
-    isempty(iunknown) ? return iunknown : nothing
-
-    # use the definition of a neighbor in talks_to
-    nan_count = length(unknown)
-    talk_count = length(talks_to)
-
-    nn = zeros(nan_count*talk_count, 2)
-    j = [1, nan_count]
-    for i in 1:talk_count
-        nn[j[1]:j[2], :] = iunknown[:, 2:3] + repeat(talks_to[i, :], nan_count)
-        j = j + nan_count
-    end
-
-    # drop those nodes which fall outside the bounds of the
-    # original array
-    L = (nn(:,1)<1)|(nn(:,1)>n)|(nn(:,2)<1)|(nn(:,2)>m)
-    nn(L,:)=[]
-    # nn = nn[findall(), :]
-
-    # form the same format 3 column array as nan_list
-    neighbors_list=[sub2ind([n,m],nn(:,1),nn(:,2)),nn]
-
-    # delete replicates in the neighbors list
-    neighbors_list=unique(neighbors_list,'rows')
-
-    # and delete those which are also in the list of NaNs.
-    neighbors_list=setdiff(neighbors_list,nan_list,'rows')
-
-
-    return neighbors_list
+function inpaint_nans(A, method=0)
+    # TODO add other methods from John d'Errico's MATLAB's `inpaint_nans`.
+    return inpaint_nans_method0(A)
 end
 
 
+"""
+    inpaint_nans_method0(A::Vector)
 
-function inpaint_nans_method0(A::Array{T,N}) where {T,N}
-    # The same as method == 1, except only work on those
-    # elements which are NaN, or at least touch a NaN.
-    nan_list, known_list, nan_list_linear = commons(A)
-
-
+Inpaints `NaN` values by solving a diffusion PDE for the standard Laplacian.
+Inspired by MATLAB's `inpaint_nans`'s method `0` for vectors (by John d'Errico).
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+"""
 function inpaint_nans_method0(A::Vector)
-    iunknown, iknown = commons(A)
+    inan = findall(@. isnan(A))
+    inotnan = findall(@. !isnan(A))
 
-    worklist = unique(sort([iunknown..., (iunknown .- 1)..., (iunknown .+ 1)...]))
-    worklist = worklist[findall(1 .< worklist .< length(A))]
-    nw = length(worklist)
+    # The Laplacian is applied to the non-NaN neighbors
+    iwork = unique(sort([inan..., (inan .- 1)..., (inan .+ 1)...]))
+    iwork = iwork[findall(1 .< iwork .< length(A))]
+    nw = length(iwork)
     u = collect(1:nw)
 
-    # Laplacian
-    Δ =  sparse(u, worklist     , -2.0, nw, length(A))
-    Δ += sparse(u, worklist .- 1, +1.0, nw, length(A))
-    Δ += sparse(u, worklist .+ 1, +1.0, nw, length(A))
+    # Build the Laplacian (not the fastest way but easier-to-read code)
+    Δ =  sparse(u, iwork     , -2.0, nw, length(A))
+    Δ += sparse(u, iwork .- 1, +1.0, nw, length(A))
+    Δ += sparse(u, iwork .+ 1, +1.0, nw, length(A))
 
     # knowns to right hand side
-    rhs = -Δ[:, iknown] * A[iknown]
+    rhs = -Δ[:, inotnan] * A[inotnan]
 
     # and solve...
     B = copy(A)
-    B[iunknown] .= Δ[:, iunknown] \ rhs
+    B[inan] .= Δ[:, inan] \ rhs
     return B
 end
 
+"""
+    list_neighbors(A, idx, neighbors)
 
+Lists all the "strict" neighbors of the indices in `idx` in Array `A`.
+"strict" here means that neighbors already in `idx` are rejected.
+The argument `neighnors` contains a list of the neighbors about the
+origin coordinate `(0, 0, ...)`.
+In other words, it is a `Vector` of `CartesianIndex` such that
+the direct neighbors of index `i` are given by `i + n for n in neighbors`.
+Inspired by MATLAB's `inpaint_nans`'s `identify_neighbors` (by John d'Errico).
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+"""
+function list_neighbors(R, idx, neighbors)
+    out = [i + n for i in idx for n in neighbors
+        if i + n ∈ R && i + n ∉ idx]
+    out = sort(unique(out))
+end
+
+"""
+    inpaint_nans_method0(A::Array{T,2}) where T
+
+Inpaints `NaN` values by solving a diffusion PDE for the standard Laplacian.
+Inspired by MATLAB's `inpaint_nans`'s method `0` for matrices (by John d'Errico).
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+"""
 function inpaint_nans_method0(A::Array{T,2}) where T
-    iunknown, iknown = commons(A)
-    n, m = size(A)
+    Inan = findall(@. isnan(A))
+    Inotnan = findall(@. !isnan(A))
 
     # horizontal and vertical neighbors only
-    talks_to = [-1 0; 0 -1; 1 0; 0 1]
-    neighbors_list = identify_neighbors(n, m, iunknown, talks_to)
+    N1 = CartesianIndex(1, 0)
+    N2 = CartesianIndex(0, 1)
+    neighbors = [N1, -N1, N2, -N2]
 
-      # list of all nodes we have identified
-      all_list=[nan_list;neighbors_list]
+    # list of strict neighbors
+    R = CartesianIndices(size(A))
+    Ineighbors = list_neighbors(R, Inan, neighbors)
 
-      # generate sparse array with second partials on row
-      # variable for each element in either list, but only
-      # for those nodes which have a row index > 1 or < n
-      L = find((all_list(:,2) > 1) & (all_list(:,2) < n))
-      nl=length(L)
-      if nl>0
-        fda=sparse(repmat(all_list(L,1),1,3), ...
-          repmat(all_list(L,1),1,3)+repmat([-1 0 1],nl,1), ...
-          repmat([1 -2 1],nl,1),nm,nm)
-      else
-        fda=spalloc(n*m,n*m,size(all_list,1)*5)
-      end
+    # list of all nodes we have identified
+    Iwork = [Inan; Ineighbors]
+    # Remove borders (Von-Neuman boundary)
+    R₂ = CartesianIndices(size(A) .- 2)
+    R₂ = [r₂ + first(R₂) for r₂ in R₂]
+    Iwork = [w for w in Iwork if w ∈ R₂]
+    # Sort it (not sure the sorting is required)
+    Iwork = sort(Iwork)
+    nw = length(Iwork)
+    u = collect(1:nw)
 
-      # 2nd partials on column index
-      L = find((all_list(:,3) > 1) & (all_list(:,3) < m))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(all_list(L,1),1,3), ...
-          repmat(all_list(L,1),1,3)+repmat([-n 0 n],nl,1), ...
-          repmat([1 -2 1],nl,1),nm,nm)
-      end
-    end
-    return
-end
-# rhs
+    # Use Linear indices to generate the sparse Laplacian
+    iwork = LinearIndices(size(A))[Iwork]
+    n1 = LinearIndices(size(A))[first(R) + N1] - LinearIndices(size(A))[first(R)]
+    n2 = LinearIndices(size(A))[first(R) + N2] - LinearIndices(size(A))[first(R)]
 
-    # eliminate knowns
-    rhs=-fda(:,known_list)*A(known_list)
-    k=find(any(fda(:,nan_list(:,1)),2))
+    # Build the Laplacian (not the fastest way but easier-to-read code)
+    Δ =  sparse(u, iwork                , -4.0, nw, length(A))
+    Δ += sparse(u, iwork .- n1, +1.0, nw, length(A))
+    Δ += sparse(u, iwork .+ n1, +1.0, nw, length(A))
+    Δ += sparse(u, iwork .- n2, +1.0, nw, length(A))
+    Δ += sparse(u, iwork .+ n2, +1.0, nw, length(A))
+
+    # Use Linear indices to access the sparse Laplacian
+    inan = LinearIndices(size(A))[Inan]
+    inotnan = LinearIndices(size(A))[Inotnan]
+
+    # knowns to right hand side
+    rhs = -Δ[:, inotnan] * A[inotnan]
 
     # and solve...
     B = copy(A)
-    B[nan_list] = Δ[k, nan_list] \ rhs(k)
+    B[inan] .= Δ[:, inan] \ rhs
+    return B
 end
 
-
-function commons(A)
-    # list the nodes which are known, and which will
-    # be interpolated
-    inan = findall(@. isnan(A))
-    inotnan = findall(@. !isnan(A))
-    # linear indices
-    return inan, inotnan
-end
-
-
-function inpaint_nans(A, method = 0)
-    method ∉ (0, 1, 2, 3, 4, 5) ? error("If supplied, method must be one of: {0,1,2,3,4,5}.") : nothing
-
-
-
-
-     case 1
-      # least squares approach with del^2. Build system
-      # for every array element as an unknown, and then
-      # eliminate those which are knowns.
-      # Build sparse matrix approximating del^2 for
-      # every element in A.
-
-      # is it 1-d or 2-d?
-      if (m == 1) || (n == 1)
-        # a 1-d case
-        u = (1:(nm-2))'
-        fda = sparse(repmat(u,1,3),bsxfun(@plus,u,0:2), ...
-          repmat([1 -2 1],nm-2,1),nm-2,nm)
-      else
-        # a 2-d case
-
-        # Compute finite difference for second partials
-        # on row variable first
-        [i,j]=ndgrid(2:(n-1),1:m)
-        ind=i(:)+(j(:)-1)*n
-        np=(n-2)*m
-        fda=sparse(repmat(ind,1,3),[ind-1,ind,ind+1], ...
-          repmat([1 -2 1],np,1),n*m,n*m)
-
-        # now second partials on column variable
-        [i,j]=ndgrid(1:n,2:(m-1))
-        ind=i(:)+(j(:)-1)*n
-        np=n*(m-2)
-        fda=fda+sparse(repmat(ind,1,3),[ind-n,ind,ind+n], ...
-          repmat([1 -2 1],np,1),nm,nm)
-      end
-
-      # eliminate knowns
-      rhs=-fda(:,known_list)*A(known_list)
-      k=find(any(fda(:,nan_list),2))
-
-      # and solve...
-      B=A
-      B(nan_list(:,1))=fda(k,nan_list(:,1))\rhs(k)
-
-     case 2
-      # Direct solve for del^2 BVP across holes
-      # generate sparse array with second partials on row
-      # variable for each nan element, only for those nodes
-      # which have a row index > 1 or < n
-
-      # is it 1-d or 2-d?
-      if (m == 1) || (n == 1)
-        # really just a 1-d case
-        error('Method 2 has problems for vector input. Please use another method.')
-
-      else
-        # a 2-d case
-        L = find((nan_list(:,2) > 1) & (nan_list(:,2) < n))
-        nl=length(L)
-        if nl>0
-          fda=sparse(repmat(nan_list(L,1),1,3), ...
-            repmat(nan_list(L,1),1,3)+repmat([-1 0 1],nl,1), ...
-            repmat([1 -2 1],nl,1),n*m,n*m)
-        else
-          fda=spalloc(n*m,n*m,size(nan_list,1)*5)
-        end
-
-        # 2nd partials on column index
-        L = find((nan_list(:,3) > 1) & (nan_list(:,3) < m))
-        nl=length(L)
-        if nl>0
-          fda=fda+sparse(repmat(nan_list(L,1),1,3), ...
-            repmat(nan_list(L,1),1,3)+repmat([-n 0 n],nl,1), ...
-            repmat([1 -2 1],nl,1),n*m,n*m)
-        end
-
-        # fix boundary conditions at extreme corners
-        # of the array in case there were nans there
-        if ismember(1,nan_list(:,1))
-          fda(1,[1 2 n+1])=[-2 1 1]
-        end
-        if ismember(n,nan_list(:,1))
-          fda(n,[n, n-1,n+n])=[-2 1 1]
-        end
-        if ismember(nm-n+1,nan_list(:,1))
-          fda(nm-n+1,[nm-n+1,nm-n+2,nm-n])=[-2 1 1]
-        end
-        if ismember(nm,nan_list(:,1))
-          fda(nm,[nm,nm-1,nm-n])=[-2 1 1]
-        end
-
-        # eliminate knowns
-        rhs=-fda(:,known_list)*A(known_list)
-
-        # and solve...
-        B=A
-        k=nan_list(:,1)
-        B(k)=fda(k,k)\rhs(k)
-
-      end
-
-     case 3
-      # The same as method == 0, except uses del^4 as the
-      # interpolating operator.
-
-      # del^4 template of neighbors
-      talks_to = [-2 0;-1 -1;-1 0;-1 1;0 -2;0 -1; ...
-          0 1;0 2;1 -1;1 0;1 1;2 0]
-      neighbors_list=identify_neighbors(n,m,nan_list,talks_to)
-
-      # list of all nodes we have identified
-      all_list=[nan_list;neighbors_list]
-
-      # generate sparse array with del^4, but only
-      # for those nodes which have a row & column index
-      # >= 3 or <= n-2
-      L = find( (all_list(:,2) >= 3) & ...
-                (all_list(:,2) <= (n-2)) & ...
-                (all_list(:,3) >= 3) & ...
-                (all_list(:,3) <= (m-2)))
-      nl=length(L)
-      if nl>0
-        # do the entire template at once
-        fda=sparse(repmat(all_list(L,1),1,13), ...
-            repmat(all_list(L,1),1,13) + ...
-            repmat([-2*n,-n-1,-n,-n+1,-2,-1,0,1,2,n-1,n,n+1,2*n],nl,1), ...
-            repmat([1 2 -8 2 1 -8 20 -8 1 2 -8 2 1],nl,1),nm,nm)
-      else
-        fda=spalloc(n*m,n*m,size(all_list,1)*5)
-      end
-
-      # on the boundaries, reduce the order around the edges
-      L = find((((all_list(:,2) == 2) | ...
-                 (all_list(:,2) == (n-1))) & ...
-                (all_list(:,3) >= 2) & ...
-                (all_list(:,3) <= (m-1))) | ...
-               (((all_list(:,3) == 2) | ...
-                 (all_list(:,3) == (m-1))) & ...
-                (all_list(:,2) >= 2) & ...
-                (all_list(:,2) <= (n-1))))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(all_list(L,1),1,5), ...
-          repmat(all_list(L,1),1,5) + ...
-            repmat([-n,-1,0,+1,n],nl,1), ...
-          repmat([1 1 -4 1 1],nl,1),nm,nm)
-      end
-
-      L = find( ((all_list(:,2) == 1) | ...
-                 (all_list(:,2) == n)) & ...
-                (all_list(:,3) >= 2) & ...
-                (all_list(:,3) <= (m-1)))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(all_list(L,1),1,3), ...
-          repmat(all_list(L,1),1,3) + ...
-            repmat([-n,0,n],nl,1), ...
-          repmat([1 -2 1],nl,1),nm,nm)
-      end
-
-      L = find( ((all_list(:,3) == 1) | ...
-                 (all_list(:,3) == m)) & ...
-                (all_list(:,2) >= 2) & ...
-                (all_list(:,2) <= (n-1)))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(all_list(L,1),1,3), ...
-          repmat(all_list(L,1),1,3) + ...
-            repmat([-1,0,1],nl,1), ...
-          repmat([1 -2 1],nl,1),nm,nm)
-      end
-
-      # eliminate knowns
-      rhs=-fda(:,known_list)*A(known_list)
-      k=find(any(fda(:,nan_list(:,1)),2))
-
-      # and solve...
-      B=A
-      B(nan_list(:,1))=fda(k,nan_list(:,1))\rhs(k)
-
-     case 4
-      # Spring analogy
-      # interpolating operator.
-
-      # list of all springs between a node and a horizontal
-      # or vertical neighbor
-      hv_list=[-1 -1 0;1 1 0;-n 0 -1;n 0 1]
-      hv_springs=[]
-      for i=1:4
-        hvs=nan_list+repmat(hv_list(i,:),nan_count,1)
-        k=(hvs(:,2)>=1) & (hvs(:,2)<=n) & (hvs(:,3)>=1) & (hvs(:,3)<=m)
-        hv_springs=[hv_springs;[nan_list(k,1),hvs(k,1)]]
-      end
-      # delete replicate springs
-      hv_springs=unique(sort(hv_springs,2),'rows')
-
-      # build sparse matrix of connections, springs
-      # connecting diagonal neighbors are weaker than
-      # the horizontal and vertical springs
-      nhv=size(hv_springs,1)
-      springs=sparse(repmat((1:nhv)',1,2),hv_springs, ...
-         repmat([1 -1],nhv,1),nhv,nm)
-
-      # eliminate knowns
-      rhs=-springs(:,known_list)*A(known_list)
-
-      # and solve...
-      B=A
-      B(nan_list(:,1))=springs(:,nan_list(:,1))\rhs
-
-     case 5
-      # Average of 8 nearest neighbors
-
-      # generate sparse array to average 8 nearest neighbors
-      # for each nan element, be careful around edges
-      fda=spalloc(n*m,n*m,size(nan_list,1)*9)
-
-      # -1,-1
-      L = find((nan_list(:,2) > 1) & (nan_list(:,3) > 1))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([-n-1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-
-      # 0,-1
-      L = find(nan_list(:,3) > 1)
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([-n, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-      # +1,-1
-      L = find((nan_list(:,2) < n) & (nan_list(:,3) > 1))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([-n+1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-      # -1,0
-      L = find(nan_list(:,2) > 1)
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([-1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-      # +1,0
-      L = find(nan_list(:,2) < n)
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-      # -1,+1
-      L = find((nan_list(:,2) > 1) & (nan_list(:,3) < m))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([n-1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-
-      # 0,+1
-      L = find(nan_list(:,3) < m)
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([n, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-      # +1,+1
-      L = find((nan_list(:,2) < n) & (nan_list(:,3) < m))
-      nl=length(L)
-      if nl>0
-        fda=fda+sparse(repmat(nan_list(L,1),1,2), ...
-          repmat(nan_list(L,1),1,2)+repmat([n+1, 0],nl,1), ...
-          repmat([1 -1],nl,1),n*m,n*m)
-      end
-
-      # eliminate knowns
-      rhs=-fda(:,known_list)*A(known_list)
-
-      # and solve...
-      B=A
-      k=nan_list(:,1)
-      B(k)=fda(k,k)\rhs(k)
-
-end
-# all done, make sure that B is the same shape as
-# A was when we came in.
-B=reshape(B,n,m)
-# ====================================================
-#      end of main function
-# ====================================================
-# ====================================================
-#      begin subfunctions
-# ====================================================
+export inpaint_nans
 
