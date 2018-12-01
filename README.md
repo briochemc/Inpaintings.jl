@@ -8,8 +8,6 @@ So far [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) only contai
 
 There is only one test: I create a sample matrix `Z` defined like the `peaks` function of MATLAB, replace some values with `NaN`s, and inpaints them back.
 The only test is to actually compare the MATLAB output (copy-pasted in this repo) to the Julia output.
-Note there are still some differences between MATLAB's `inpaint_nans` and this package when there are some `NaN`s on the borders (tested personally but not in the current repo). 
-This may be from mistakes introduced when porting the code, or it may be due to differences in MATLAB and Julia that are out of my hands.
 
 Suggestions, ideas, issues, and PRs welcome!
 
