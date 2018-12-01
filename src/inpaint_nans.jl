@@ -51,8 +51,8 @@ end
 """
     list_neighbors(A, idx, neighbors)
 
-Lists all the "strict" neighbors of the indices in `idx` in Array `A`.
-"strict" here means that neighbors already in `idx` are rejected.
+Lists all the neighbors of the indices in `idx` in Array `A`.
+Neighbors already in `idx` are accepted.
 The argument `neighnors` contains a list of the neighbors about the
 origin coordinate `(0, 0, ...)`.
 In other words, it is a `Vector` of `CartesianIndex` such that
@@ -61,9 +61,8 @@ Inspired by MATLAB's `inpaint_nans`'s `identify_neighbors` (by John d'Errico).
 See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
 """
 function list_neighbors(R, idx, neighbors)
-    out = [i + n for i in idx for n in neighbors
-        if i + n ∈ R && i + n ∉ idx]
-    out = sort(unique(out))
+    out = [i + n for i in idx for n in neighbors if i + n ∈ R]
+    out = sort(unique([out; idx]))
 end
 
 """
@@ -72,6 +71,35 @@ end
 Inpaints `NaN` values by solving a diffusion PDE for the standard Laplacian.
 Inspired by MATLAB's `inpaint_nans`'s method `0` for matrices (by John d'Errico).
 See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+The discrete stencil used for ∇² looks like
+```
+            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 1 ├─┤-4 ├─┤ 1 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘
+```
+The stencil is not applied at the coreners, but its 1D components,
+```
+   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘
+```
+are applied at borders.
 """
 function inpaint_nans_method0(A::Array{T,2}) where T
     Inan = findall(@. isnan(A))
@@ -84,30 +112,34 @@ function inpaint_nans_method0(A::Array{T,2}) where T
 
     # list of strict neighbors
     R = CartesianIndices(size(A))
-    Ineighbors = list_neighbors(R, Inan, neighbors)
+    Iwork = list_neighbors(R, Inan, neighbors)
 
-    # list of all nodes we have identified
-    Iwork = [Inan; Ineighbors]
-    # Remove borders (Von-Neuman boundary)
-    R₂ = CartesianIndices(size(A) .- 2)
-    R₂ = [r₂ + first(R₂) for r₂ in R₂]
-    Iwork = [w for w in Iwork if w ∈ R₂]
     # Sort it (not sure the sorting is required)
     Iwork = sort(Iwork)
+    # Vector to span all working nodes
     nw = length(Iwork)
     u = collect(1:nw)
+    # Preallocate the Laplacian (not the fastest way but easier-to-read code)
+    Δ = sparse([], [], Vector{T}(), nw, length(A))
 
-    # Use Linear indices to generate the sparse Laplacian
-    iwork = LinearIndices(size(A))[Iwork]
-    n1 = LinearIndices(size(A))[first(R) + N1] - LinearIndices(size(A))[first(R)]
-    n2 = LinearIndices(size(A))[first(R) + N2] - LinearIndices(size(A))[first(R)]
+    for N in (N1, N2)
+        # R′ is the ranges of indices without one of the borders
+        R′ = CartesianIndices(size(A) .- 2 .* N.I)
+        R′ = [r + N for r in R′]
+        # indices of Iwork in R1 and in R2, respectively
+        iw = findall(map(x -> x ∈ R′, Iwork))
+        Iwork′= Iwork[iw]
+        u′ = u[iw]
 
-    # Build the Laplacian (not the fastest way but easier-to-read code)
-    Δ =  sparse(u, iwork      , -4.0, nw, length(A))
-    Δ += sparse(u, iwork .- n1, +1.0, nw, length(A))
-    Δ += sparse(u, iwork .+ n1, +1.0, nw, length(A))
-    Δ += sparse(u, iwork .- n2, +1.0, nw, length(A))
-    Δ += sparse(u, iwork .+ n2, +1.0, nw, length(A))
+        # Use Linear indices to generate the sparse Laplacian
+        iwork′ = LinearIndices(size(A))[Iwork′]
+        n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
+
+        # Build the Laplacian (not the fastest way but easier-to-read code)
+        Δ += sparse(u′, iwork′      , -2.0, nw, length(A))
+        Δ += sparse(u′, iwork′ .- n, +1.0, nw, length(A))
+        Δ += sparse(u′, iwork′ .+ n, +1.0, nw, length(A))
+    end
 
     # Use Linear indices to access the sparse Laplacian
     inan = LinearIndices(size(A))[Inan]
