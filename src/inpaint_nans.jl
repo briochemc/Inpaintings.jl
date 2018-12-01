@@ -10,6 +10,7 @@ function inpaint_nans(A, method=0)
     # TODO add other methods from John d'Errico's MATLAB's `inpaint_nans`.
     return @match method begin
         0 => inpaint_nans_method0(A)
+        1 => inpaint_nans_method1(A)
         3 => inpaint_nans_method3(A)
         6 => inpaint_nans_method6(A)
         _ => error("Method $method not available yet. Suggest it on Github!")
@@ -155,6 +156,89 @@ function inpaint_nans_method0(A::Array{T,2}) where T
 end
 
 """
+    inpaint_nans_method1(A::Array{T,2}) where T
+
+Inpaints `NaN` values by solving a diffusion PDE for the standard Laplacian.
+Inspired by MATLAB's `inpaint_nans`'s method `0` for matrices (by John d'Errico).
+See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+The discrete stencil used for ∇² looks like
+```
+            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 1 ├─┤-4 ├─┤ 1 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘
+```
+The stencil is not applied at the coreners, but its 1D components,
+```
+   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘
+```
+are applied at borders.
+"""
+function inpaint_nans_method1(A::Array{T,2}) where T
+    Inan = findall(@. isnan(A))
+    Inotnan = findall(@. !isnan(A))
+
+    # horizontal and vertical neighbors only
+    N1 = CartesianIndex(1, 0)
+    N2 = CartesianIndex(0, 1)
+    neighbors = [N1, -N1, N2, -N2]
+
+    # list of strict neighbors
+    R = CartesianIndices(size(A))
+    Iwork = list_neighbors(R, Inan, neighbors)
+    iwork = LinearIndices(size(A))[Iwork]
+    # Preallocate the Laplacian (not the fastest way but easier-to-read code)
+    nA = length(A)
+    Δ = sparse([], [], Vector{T}(), nA, nA)
+
+    for N in (N1, N2)
+        # R′ is the ranges of indices without one of the borders
+        R′ = CartesianIndices(size(A) .- 2 .* N.I)
+        R′ = [r + N for r in R′]
+
+        u = vec(LinearIndices(size(A))[R′])
+        n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
+
+        # Build the Laplacian (not the fastest way but easier-to-read code)
+        Δ += sparse(u, u     , -2.0, nA, nA)
+        Δ += sparse(u, u .- n, +1.0, nA, nA)
+        Δ += sparse(u, u .+ n, +1.0, nA, nA)
+    end
+
+    # Use Linear indices to access the sparse Laplacian
+    inan = LinearIndices(size(A))[Inan]
+    inotnan = LinearIndices(size(A))[Inotnan]
+
+    # knowns to right hand side
+    rhs = -Δ[iwork, inotnan] * A[inotnan]
+
+    # and solve...
+    B = copy(A)
+    B[inan] .= Δ[iwork, inan] \ rhs
+    return B
+end
+
+
+
+
+"""
     inpaint_nans_method6(A::Array{T,2}) where T
 
 Inpaints `NaN` values by solving a diffusion PDE for a diagonally filled Laplacian:
@@ -245,68 +329,72 @@ The discrete stencil used for ∇⁴ looks like
             │ 1 │
             └───┘
 ```
-See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
+The stencil is actually constructed from its 1st order 1D components,
+```
+   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘
+```
+which are applied at the borders.
 """
 function inpaint_nans_method3(A::Array{T,2}) where T
+    println("Using big stencil")
     Inan = findall(@. isnan(A))
     Inotnan = findall(@. !isnan(A))
 
-    # direct and diagonal neighbors
+    # horizontal and vertical neighbors only
     N0 = CartesianIndex(0, 0)
     N1 = CartesianIndex(1, 0)
     N2 = CartesianIndex(0, 1)
-    neighbors_tmp = (N0, N1, N2, -N1, -N2)
-    neighbors = sort(unique([n1 + n2 for n1 in neighbors_tmp, n2 in neighbors_tmp if n1 + n2 ≠ N0]))
+    Ns = (N0, N1, -N1, N2, -N2)
+    neighbors = unique(sort([n1 + n2 for n1 in Ns, n2 in Ns if n1 + n2 ≠ N0]))
 
     # list of strict neighbors
     R = CartesianIndices(size(A))
-    Ineighbors = list_neighbors(R, Inan, neighbors)
-
-    # list of all nodes we have identified
-    Iwork = [Inan; Ineighbors]
-    # Remove borders (Von-Neuman boundary)
-    R₂ = CartesianIndices(size(A) .- 4)
-    R₂ = [r₂ + 2first(R₂) for r₂ in R₂]
-    Iwork = [w for w in Iwork if w ∈ R₂]
-    # Sort it (not sure the sorting is required)
-    Iwork = sort(Iwork)
-    nw = length(Iwork)
-    u = collect(1:nw)
-
-    # Use Linear indices to generate the sparse Laplacian
+    Iwork = list_neighbors(R, Inan, neighbors)
     iwork = LinearIndices(size(A))[Iwork]
-    n1 = LinearIndices(size(A))[first(R) + N1] - LinearIndices(size(A))[first(R)]
-    n2 = LinearIndices(size(A))[first(R) + N2] - LinearIndices(size(A))[first(R)]
 
-    nfirst = [n1, n2, -n1, -n2] # direct neihgbors
-    ndiag = [n1 + n2, n1 - n2, -n1 + n2, -n1 - n2] # diag neighbors
-    nsecond = 2nfirst # second neighbors in straight lines
+    # Preallocate the Laplacian (not the fastest way but easier-to-read code)
+    nA = length(A)
+    Δ = sparse([], [], Vector{T}(), nA, nA)
 
-    # Build the Laplacian (not the fastest way but easier-to-read code)
-    Δ =  sparse(u, iwork      , +20.0, nw, length(A))
-    for n in nfirst
-        Δ += sparse(u, iwork .+ n, -8.0, nw, length(A))
+    for N in (N1, N2)
+        # R′ is the ranges of indices without one of the borders
+        R′ = CartesianIndices(size(A) .- 2 .* N.I)
+        R′ = [r + N for r in R′]
+
+        u = vec(LinearIndices(size(A))[R′])
+        n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
+
+        # Build the Laplacian (not the fastest way but easier-to-read code)
+        Δ += sparse(u, u     , -2.0, nA, nA)
+        Δ += sparse(u, u .- n, +1.0, nA, nA)
+        Δ += sparse(u, u .+ n, +1.0, nA, nA)
     end
-    for n in ndiag
-        Δ += sparse(u, iwork .+ n, +2.0, nw, length(A))
-    end
-    for n in nsecond
-        Δ += sparse(u, iwork .+ n, +1.0, nw, length(A))
-    end
+
+    # The biharmonic operator ∇⁴ = Δ²
+    Δ = Δ^2
 
     # Use Linear indices to access the sparse Laplacian
     inan = LinearIndices(size(A))[Inan]
     inotnan = LinearIndices(size(A))[Inotnan]
 
     # knowns to right hand side
-    rhs = -Δ[:, inotnan] * A[inotnan]
+    rhs = -Δ[iwork, inotnan] * A[inotnan]
 
     # and solve...
     B = copy(A)
-    B[inan] .= Δ[:, inan] \ rhs
+    B[inan] .= Δ[iwork, inan] \ rhs
     return B
 end
-
 
 
 export inpaint_nans
