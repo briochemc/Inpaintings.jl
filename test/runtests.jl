@@ -1,4 +1,4 @@
-using Inpaintings, Test, Plots
+using Inpaintings, Test
 
 my_tests = [
     "test_peaks.jl"
