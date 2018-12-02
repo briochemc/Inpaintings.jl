@@ -21,22 +21,28 @@
   </a>
 </p>
 
-The goal of this package is to port MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication)
+This package provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication)
 
-`inpaint_nans` takes a vector or a matrix as input and fills the `NaN`s by solving a simple 1d or 2d PDE with a basic finite difference Laplacian operator. 
+Simply put, `inpaint_nans` takes a vector or a matrix `A` as input and fills its `NaN`s by solving a simple (1D or 2D) PDE.
 
-So far [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) only contains John d'Errico's method `0`, which is well suited for filling `NaN`s in a "diffusive" way.
+Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) currently only implements the following methods:
+    - [x] method `0`
+    - [ ] method `1`
+    - [ ] method `2`
+    - [x] method `3` (beware: not an exact match)
+    - [ ] method `4`
+    - [ ] method `5`
 
-There is only one test: I create a sample matrix `Z` defined like the `peaks` function of MATLAB, replace some values with `NaN`s, and inpaints them back.
-The only test is to actually compare the MATLAB output (copy-pasted in this repo) to the Julia output.
+There is currently only one test for method `0`. 
+This test checks that filling the `NaN`s of a sample matrix `Z` defined by MATLAB's [`peaks`](https://www.mathworks.com/help/matlab/ref/peaks.html) function fills the `NaN`s with the same values as MATLAB's version of `inpaint_nans` does.
 
 Suggestions, ideas, issues, and PRs welcome!
 
 ## TODOs
 
-- [ ] Add other methods
+- [ ] Add all other methods
 - [ ] improve efficiency
 - [ ] Julian-ify the code
 - [ ] improve documentation in Readme
-- [ ] Add CI
-- [ ] Add Documentation and examples using Documenter.jl and/or Literate.jl
+- [ ] Add Documentation examples
+- [ ] Add notebook exampls via Literate.jl
