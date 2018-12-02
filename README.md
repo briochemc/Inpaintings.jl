@@ -26,12 +26,12 @@ This package provides a Julia version of MATLAB's `inpaint_nans` function (origi
 Simply put, `inpaint_nans` takes a vector or a matrix `A` as input and fills its `NaN`s by solving a simple (1D or 2D) PDE.
 
 Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) currently only implements the following methods:
-    - [x] method `0`
-    - [ ] method `1`
-    - [ ] method `2`
-    - [x] method `3` (beware: not an exact match)
-    - [ ] method `4`
-    - [ ] method `5`
+- [x] method `0`
+- [ ] method `1`
+- [ ] method `2`
+- [x] method `3` (beware: not an exact match)
+- [ ] method `4`
+- [ ] method `5`
 
 There is currently only one test for method `0`. 
 This test checks that filling the `NaN`s of a sample matrix `Z` defined by MATLAB's [`peaks`](https://www.mathworks.com/help/matlab/ref/peaks.html) function fills the `NaN`s with the same values as MATLAB's version of `inpaint_nans` does.
