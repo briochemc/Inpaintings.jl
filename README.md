@@ -40,7 +40,9 @@ Suggestions, ideas, issues, and PRs welcome!
 
 ## TODOs
 
-- [ ] Add all other methods
+- [ ] Add all methods from original MATLAB version
+- [ ] Add new methods (e.g., Laplacian with diagonal terms for more rotational symmetry)
+- [ ] Add functionality to replace not only `NaN`s but also `nothing`s and `missing`s
 - [ ] improve efficiency
 - [ ] Julian-ify the code
 - [ ] improve documentation in Readme
