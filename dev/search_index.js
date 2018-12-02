@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Inpaintings.jl Documentation",
     "title": "Inpaintings.jl Documentation",
     "category": "section",
-    "text": "This package provides MATLAB\'s inpaint_nans function originally written by John d\'Errico (and available on the MathWorks File Exchange website).inpaint_nans takes a vector or a matrix as input and fills the NaNs by solving a simple 1d or 2d PDE with a finite difference approximation of a Laplacian operator.So far Inpaintings.jl only replicates John d\'Errico\'s method 0 well, which is well suited for filling NaNs in a \"diffusive\" way. Methods 1 and 3 are on their way."
+    "text": "Inpaintings.jl provides functions that perform a similar task to MATLAB\'s inpaint_nans function.  (MATLAB\'s inpaint_nans was originally written by John d\'Errico and is available on the MathWorks File Exchange website.)inpaint_nans takes a vector or a matrix as input and fills (\"inpaints\") the NaNs by solving a simple 1D or 2D PDE.So far Inpaintings.jl only replicates John d\'Errico\'s method 0 well, which is well suited for filling NaNs in a \"diffusive\" way. Methods 1 and 3 are on their way. Other methods will come next."
 },
 
 {
