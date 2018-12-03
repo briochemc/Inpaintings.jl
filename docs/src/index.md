@@ -36,7 +36,8 @@ true
 
 ## Functions
 
-```@docs
-inpaint_nans
+```@autodocs
+Modules = [Inpaintings]
+Order   = [:function, :type]
 ```
 
