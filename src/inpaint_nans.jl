@@ -6,11 +6,11 @@ Inspired by MATLAB's `inpaint_nans`'s (by John d'Errico).
 See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
 Currently only method `0` is implemented.
 """
-function inpaint_nans(A, method=0)
+function inpaint_nans(A, method=0, cycledims=Int64[])
     # TODO add other methods from John d'Errico's MATLAB's `inpaint_nans`.
     return @match method begin
         0 => inpaint_nans_method0(A)
-        1 => inpaint_nans_method1(A)
+        1 => inpaint_nans_method1(A, cycledims)
         3 => inpaint_nans_method3(A)
         6 => inpaint_nans_method6(A)
         _ => error("Method $method not available yet. Suggest it on Github!")
@@ -191,24 +191,32 @@ The stencil is not applied at the coreners, but its 1D components,
 ```
 are applied at borders.
 """
-function inpaint_nans_method1(A::Array{T,2}) where T
+function inpaint_nans_method1(A::Array{T,2}, cycledims=Int64[]) where T
     Inan = findall(@. isnan(A))
     Inotnan = findall(@. !isnan(A))
 
     # horizontal and vertical neighbors only
-    N1 = CartesianIndex(1, 0)
-    N2 = CartesianIndex(0, 1)
+    N1 = CartesianIndices(size(A))[2,1] - CartesianIndices(size(A))[1,1]
+    N2 = CartesianIndices(size(A))[1,2] - CartesianIndices(size(A))[1,1]
+    N1′ = CartesianIndices(size(A))[end,1] - CartesianIndices(size(A))[1,1]
+    N2′ = CartesianIndices(size(A))[1,end] - CartesianIndices(size(A))[1,1]
     neighbors = [N1, -N1, N2, -N2]
+    for d in cycledims # Add neighbors in cyclic case
+        neighbors = push!(neighbors, (N1′, N2′)[d])
+        neighbors = push!(neighbors, -((N1′, N2′)[d]))
+    end
 
     # list of strict neighbors
     R = CartesianIndices(size(A))
     Iwork = list_neighbors(R, Inan, neighbors)
     iwork = LinearIndices(size(A))[Iwork]
     # Preallocate the Laplacian (not the fastest way but easier-to-read code)
+
     nA = length(A)
     Δ = sparse([], [], Vector{T}(), nA, nA)
 
-    for N in (N1, N2)
+    for iN in 1:2
+        N = (N1, N2)[iN]
         # R′ is the ranges of indices without one of the borders
         R′ = CartesianIndices(size(A) .- 2 .* N.I)
         R′ = [r + N for r in R′]
@@ -220,6 +228,23 @@ function inpaint_nans_method1(A::Array{T,2}) where T
         Δ += sparse(u, u     , -2.0, nA, nA)
         Δ += sparse(u, u .- n, +1.0, nA, nA)
         Δ += sparse(u, u .+ n, +1.0, nA, nA)
+    end
+
+    for d in cycledims # Add Laplacian along border if cyclic along dimension `d`
+        N = (N1, N2)[d]    # Usual neighbor
+        N′ = (N1′, N2′)[d] # Neighbor across the border
+        n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
+        n′ = LinearIndices(size(A))[first(R) + N′] - LinearIndices(size(A))[first(R)]
+        R′₊ = [r for r in R if r + N ∉ R] # One border
+        R′₋ = [r for r in R if r - N ∉ R] # The other border
+        u₊ = LinearIndices(size(A))[R′₊]
+        u₋ = LinearIndices(size(A))[R′₋]
+        Δ += sparse(u₊, u₊      , -2.0, nA, nA)
+        Δ += sparse(u₊, u₊ .- n , +1.0, nA, nA)
+        Δ += sparse(u₊, u₊ .- n′, +1.0, nA, nA)
+        Δ += sparse(u₋, u₋      , -2.0, nA, nA)
+        Δ += sparse(u₋, u₋ .+ n , +1.0, nA, nA)
+        Δ += sparse(u₋, u₋ .+ n′, +1.0, nA, nA)
     end
 
     # Use Linear indices to access the sparse Laplacian
@@ -346,7 +371,6 @@ The stencil is actually constructed from its 1st order 1D components,
 which are applied at the borders.
 """
 function inpaint_nans_method3(A::Array{T,2}) where T
-    println("Using big stencil")
     Inan = findall(@. isnan(A))
     Inotnan = findall(@. !isnan(A))
 
@@ -395,6 +419,9 @@ function inpaint_nans_method3(A::Array{T,2}) where T
     B[inan] .= Δ[iwork, inan] \ rhs
     return B
 end
+
+
+
 
 
 export inpaint_nans
