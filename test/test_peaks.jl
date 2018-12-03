@@ -9,13 +9,13 @@ ys = LinRange(-3, 3, 50)
 Z = [peaks(x, y) for y in ys, x in xs]
 
 # Remove some values in blocks
-Z_with_NaNs = copy(Z)
-Z_with_NaNs[1:10, 1:10] .= NaN
-Z_with_NaNs[20:40, 20:35] .= NaN
+Z_with_missing_values = convert(Array{Union{Missing, eltype(Z)}} ,Z)
 # Remove some values at random indices (pregenerated for determinism of the test)
 # pregenerated via `rand(CartesianIndices(size(Z)), 10)`
 # Note I made sure no NaN on the border, need to figure out why different from MATLAB there
 idx = [
+ vec(CartesianIndices((1:10, 1:10)))
+ vec(CartesianIndices((20:40, 20:35)))
  CartesianIndex(45, 8)
  CartesianIndex(41, 24)
  CartesianIndex(5, 30)
@@ -27,10 +27,9 @@ idx = [
  CartesianIndex(16, 16)
  CartesianIndex(22, 42)
 ]
-Z_with_NaNs[idx] .= NaN
+Z_with_missing_values[idx] .= missing
 
-Z_reconstructed0 = inpaint_nans(Z_with_NaNs)
-Z_reconstructed3 = inpaint_nans(Z_with_NaNs, 3)
+Z_reconstructed0 = inpaint(Z_with_missing_values)
 
 #using Plots
 #contourf(ys, xs, Z)

@@ -4,6 +4,6 @@ module Inpaintings
 using SparseArrays, SuiteSparse, LinearAlgebra
 using Match
 
-include("inpaint_nans.jl")
+include("inpaint.jl")
 
 end # module
