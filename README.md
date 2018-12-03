@@ -36,19 +36,18 @@ Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https:
 - [ ] method `4`
 - [ ] method `5`
 
-There is currently only one test: for method `0`. 
+Method `1` supports cyclic inpainting if the user specifies some dimensions over which to cycle via, e.g., `inpaint_nans(A, 1, [1, 2])`.
+
+There is currently only one test: for method `0` (which gives the same result as method `1`). 
 This test checks that inpainting the `NaN` values of a sample matrix defined by MATLAB's [`peaks`](https://www.mathworks.com/help/matlab/ref/peaks.html) function does so with the same values as MATLAB's version of `inpaint_nans`.
 
 Suggestions, ideas, issues, and PRs welcome!
 
 ## TODOs
 
-- [ ] Add all methods from original MATLAB version
-- [ ] Add new methods (e.g., Laplacian with diagonal terms for more rotational symmetry)
 - [ ] Add functionality to replace not only `NaN`s but also `nothing`s and `missing`s
 - [ ] improve efficiency
 - [ ] Julian-ify the code
 - [ ] improve documentation in Readme
 - [ ] Add Documentation examples
 - [ ] Add notebook exampls via Literate.jl
-- [ ] Add functionality for cyclic cases
