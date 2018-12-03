@@ -9,4 +9,72 @@ B ≈ fullA
 
 # output
 
-true</code></pre><h2><a class="nav-anchor" id="Functions-1" href="#Functions-1">Functions</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans" href="#Inpaintings.inpaint_nans"><code>Inpaintings.inpaint_nans</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">inpaint_nans(A, method=0)</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. Currently only method <code>0</code> is implemented.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/60064cf96d4c40d0c91d39d247752767cfc816be/src/inpaint_nans.jl#L1-L8">source</a></section><footer><hr/></footer></article></body></html>
+true</code></pre><h2><a class="nav-anchor" id="Functions-1" href="#Functions-1">Functions</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans" href="#Inpaintings.inpaint_nans"><code>Inpaintings.inpaint_nans</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">inpaint_nans(A, method=0)</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. Currently only method <code>0</code> is implemented.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L1-L8">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans_method0-Tuple{Array{T,1} where T}" href="#Inpaintings.inpaint_nans_method0-Tuple{Array{T,1} where T}"><code>Inpaintings.inpaint_nans_method0</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_nans_method0(A::Vector)</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for vectors (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L21-L27">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans_method0-Union{Tuple{Array{T,2}}, Tuple{T}} where T" href="#Inpaintings.inpaint_nans_method0-Union{Tuple{Array{T,2}}, Tuple{T}} where T"><code>Inpaintings.inpaint_nans_method0</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_nans_method0(A::Array{T,2}) where T</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for matrices (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for ∇² looks like</p><pre><code class="language-none">            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 1 ├─┤-4 ├─┤ 1 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘</code></pre><p>The stencil is not applied at the coreners, but its 1D components,</p><pre><code class="language-none">   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘</code></pre><p>are applied at borders.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L69-L104">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans_method1-Union{Tuple{Array{T,2}}, Tuple{T}, Tuple{Array{T,2},Any}} where T" href="#Inpaintings.inpaint_nans_method1-Union{Tuple{Array{T,2}}, Tuple{T}, Tuple{Array{T,2},Any}} where T"><code>Inpaintings.inpaint_nans_method1</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_nans_method1(A::Array{T,2}) where T</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for matrices (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for ∇² looks like</p><pre><code class="language-none">            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 1 ├─┤-4 ├─┤ 1 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘</code></pre><p>The stencil is not applied at the coreners, but its 1D components,</p><pre><code class="language-none">   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘</code></pre><p>are applied at borders.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L158-L193">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans_method3-Union{Tuple{Array{T,2}}, Tuple{T}} where T" href="#Inpaintings.inpaint_nans_method3-Union{Tuple{Array{T,2}}, Tuple{T}} where T"><code>Inpaintings.inpaint_nans_method3</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_nans_method3(A::Array{T,2}) where T</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for ∇⁴: Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>3</code> for matrices (by John d&#39;Errico). The discrete stencil used for ∇⁴ looks like</p><pre><code class="language-none">            ┌───┐
+            │ 1 │
+            └─┬─┘
+              │
+      ┌───┐ ┌─┴─┐ ┌───┐
+      │ 2 ├─┤-8 ├─┤ 2 │
+      └─┬─┘ └─┬─┘ └─┬─┘
+        │     │     │
+┌───┐ ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ ┌───┐
+│ 1 ├─┤-8 ├─┤20 ├─┤-8 ├─┤ 1 │
+└───┘ └─┬─┘ └─┬─┘ └─┬─┘ └───┘
+        │     │     │
+      ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+      │ 2 ├─┤-8 ├─┤ 2 │
+      └───┘ └─┬─┘ └───┘
+              │
+            ┌─┴─┐
+            │ 1 │
+            └───┘</code></pre><p>The stencil is actually constructed from its 1st order 1D components,</p><pre><code class="language-none">   ┌───┐
+   │ 1 │
+   └─┬─┘
+     │
+   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐
+   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │
+   └─┬─┘        └───┘ └───┘ └───┘
+     │
+   ┌─┴─┐
+   │ 1 │
+   └───┘</code></pre><p>which are applied at the borders.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L330-L372">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_nans_method6-Union{Tuple{Array{T,2}}, Tuple{T}} where T" href="#Inpaintings.inpaint_nans_method6-Union{Tuple{Array{T,2}}, Tuple{T}} where T"><code>Inpaintings.inpaint_nans_method6</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_nans_method6(A::Array{T,2}) where T</code></pre><p>Inpaints <code>NaN</code> values by solving a diffusion PDE for a diagonally filled Laplacian:</p><div>\[\mathbf{D}_{xy}^{2} = \begin{bmatrix}0.25&amp;0.5&amp;0.25\\0.5&amp;-3&amp;0.5\\0.25&amp;0.5&amp;0.25\end{bmatrix}\]</div><p>Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for matrices (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L266-L275">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.list_neighbors-Tuple{Any,Any,Any}" href="#Inpaintings.list_neighbors-Tuple{Any,Any,Any}"><code>Inpaintings.list_neighbors</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">list_neighbors(A, idx, neighbors)</code></pre><p>Lists all the neighbors of the indices in <code>idx</code> in Array <code>A</code>. Neighbors already in <code>idx</code> are accepted. The argument <code>neighnors</code> contains a list of the neighbors about the origin coordinate <code>(0, 0, ...)</code>. In other words, it is a <code>Vector</code> of <code>CartesianIndex</code> such that the direct neighbors of index <code>i</code> are given by <code>i + n for n in neighbors</code>. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s <code>identify_neighbors</code> (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/6721a804b07bb04bbf08fa1929aacffabc91135e/src/inpaint_nans.jl#L52-L63">source</a></section><footer><hr/></footer></article></body></html>
