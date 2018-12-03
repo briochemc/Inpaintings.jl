@@ -30,7 +30,7 @@ Simply put, `inpaint_nans` takes a vector or a matrix `A` as input and fills its
 
 Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) currently only implements the following methods:
 - [x] method `0`
-- [ ] method `1`
+- [x] method `1`
 - [ ] method `2`
 - [x] method `3` (beware: not an exact match)
 - [ ] method `4`
@@ -51,3 +51,4 @@ Suggestions, ideas, issues, and PRs welcome!
 - [ ] improve documentation in Readme
 - [ ] Add Documentation examples
 - [ ] Add notebook exampls via Literate.jl
+- [ ] Add functionality for cyclic cases
