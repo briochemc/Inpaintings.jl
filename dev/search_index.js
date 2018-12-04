@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Inpaintings.jl Documentation",
     "title": "Inpaintings.jl Documentation",
     "category": "section",
-    "text": "Inpaintings.jl provides functions that perform a similar task to MATLAB\'s inpaint_nans function.  (MATLAB\'s inpaint_nans was originally written by John d\'Errico and is available on the MathWorks File Exchange website.)inpaint_nans takes a vector or a matrix as input and fills (\"inpaints\") the NaNs by solving a simple 1D or 2D PDE.So far Inpaintings.jl only replicates John d\'Errico\'s method 0 well, which is well suited for filling NaNs in a \"diffusive\" way. Methods 1 and 3 are on their way. Other methods will come next."
+    "text": "Inpaintings.jl provides a Julia version of MATLAB\'s inpaint_nans function (originally written by John d\'Errico, available on the MathWorks File Exchange website and ported here with his authorization by personal communication).Because Julia supports missing values, Inpaintings.jl provides a more functional inpaint function, which takes a vector or a matrix A as input and fills its missing or NaN values by solving a simple (1D or 2D) PDE."
 },
 
 {
@@ -21,7 +21,55 @@ var documenterSearchIndex = {"docs": [
     "page": "Inpaintings.jl Documentation",
     "title": "Usage",
     "category": "section",
-    "text": "Use the package as you would any Julia packageDocTestSetup = quote\n    using Inpaintings\nendThe command inpaint_nans(A) will fill the NaNs of an Array A (that has some NaNs):# Making a test matrix A with some NaNs by replacing values from fullA\nn = 10\nfullA = float(collect(1:n) * collect(1:n)\')\nA = copy(fullA)\nA[1:5, 1:5] .= NaN # replace some values with some NaNs\nB = inpaint(A, NaN)\nB ≈ fullA\n\n# output\n\ntrue"
+    "text": "Use the package as you would any Julia package, via using Inpaintings.DocTestSetup = quote\n    using Inpaintings\nendBasic usage is done by applying the function inpaint to an array that you want to inpaint.The tutorial below shows the functionality of Inpaintings.jl and how to use the function inpaint."
+},
+
+{
+    "location": "#Tutorial-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Tutorial",
+    "category": "section",
+    "text": "Let A be a matrix of floats to which we are going to \"remove\" some values to inpaintn = 10\nA = float(collect(1:n) * collect(1:n)\')\n\n# output\n\n10×10 Array{Float64,2}:\n  1.0   2.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0   10.0\n  2.0   4.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0   20.0\n  3.0   6.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0   30.0\n  4.0   8.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0   40.0\n  5.0  10.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0   50.0\n  6.0  12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0  14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0  16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0  18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0Let us \"remove\" some values of A by replacing them with missing:Amiss = convert(Array{Union{Missing, Float64}}, A)\nAmiss[1:5, [1,2,end]] .= missing # replace some values with `missing`\nAmiss # Let\'s have a look at the new array with missing values\n\n# output\n\n10×10 Array{Union{Missing, Float64},2}:\n   missing    missing   3.0   4.0   5.0   6.0   7.0   8.0   9.0     missing\n   missing    missing   6.0   8.0  10.0  12.0  14.0  16.0  18.0     missing\n   missing    missing   9.0  12.0  15.0  18.0  21.0  24.0  27.0     missing\n   missing    missing  12.0  16.0  20.0  24.0  28.0  32.0  36.0     missing\n   missing    missing  15.0  20.0  25.0  30.0  35.0  40.0  45.0     missing\n  6.0       12.0       18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0       14.0       21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0       16.0       24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0       18.0       27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0       20.0       30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
+},
+
+{
+    "location": "#Inpainting-missing-values-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Inpainting missing values",
+    "category": "section",
+    "text": "We can now inpaint the missing values of A with the simple command:inpaint(Amiss)\n\n# output\n\n10×10 Array{Union{Missing, Float64},2}:\n  1.0   2.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0   10.0\n  2.0   4.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0   20.0\n  3.0   6.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0   30.0\n  4.0   8.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0   40.0\n  5.0  10.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0   50.0\n  6.0  12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0  14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0  16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0  18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
+},
+
+{
+    "location": "#Cyclic-dimensions-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Cyclic dimensions",
+    "category": "section",
+    "text": "An option that may be useful is to assume that one dimension is cyclic (e.g., when mapping the globe for longitude):inpaint(Amiss, cycledims=[2])\n\n# output\n\n10×10 Array{Float64,2}:\n  6.12342   3.75212   3.0   4.0   5.0   6.0   7.0   8.0   9.0    8.44909\n 11.1515    7.418     6.0   8.0  10.0  12.0  14.0  16.0  18.0   15.7034\n 15.4254   10.3003    9.0  12.0  15.0  18.0  21.0  24.0  27.0   23.2602\n 17.668    12.0028   12.0  16.0  20.0  24.0  28.0  32.0  36.0   31.3321\n 15.4959   12.1129   15.0  20.0  25.0  30.0  35.0  40.0  45.0   42.0958\n  6.0      12.0      18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0      14.0      21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0      16.0      24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0      18.0      27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0      20.0      30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
+},
+
+{
+    "location": "#Inpainting-NaNs-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Inpainting NaNs",
+    "category": "section",
+    "text": "If A is an array of floats and contains some NaNs rather than missing values, the command inpaint(A) will fill its NaNs. First, let\'s create the array with NaNs:Anan = copy(A)\nAnan[1:5, [1,2,end]] .= NaN # replace some values with `NaN`\nAnan # Let\'s have a look at the new array with NaN values\n\n# output\n\n10×10 Array{Float64,2}:\n NaN    NaN     3.0   4.0   5.0   6.0   7.0   8.0   9.0  NaN\n NaN    NaN     6.0   8.0  10.0  12.0  14.0  16.0  18.0  NaN\n NaN    NaN     9.0  12.0  15.0  18.0  21.0  24.0  27.0  NaN\n NaN    NaN    12.0  16.0  20.0  24.0  28.0  32.0  36.0  NaN\n NaN    NaN    15.0  20.0  25.0  30.0  35.0  40.0  45.0  NaN\n   6.0   12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n   7.0   14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n   8.0   16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n   9.0   18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n  10.0   20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0Now, we can inpaint Anan\'s NaN values viainpaint(Anan)\n\n# output\n\n10×10 Array{Float64,2}:\n  1.0   2.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0   10.0\n  2.0   4.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0   20.0\n  3.0   6.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0   30.0\n  4.0   8.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0   40.0\n  5.0  10.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0   50.0\n  6.0  12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0  14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0  16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0  18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
+},
+
+{
+    "location": "#Inpainting-any-value-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Inpainting any value",
+    "category": "section",
+    "text": "Instead of inpainting missing or NaN values, we sometimes want to inpaint a specific value. This is done by giving the value after the array as an argument, via the syntax inpaint(A, value_to_inpaint). To check this, let\'s add a bunch of 12345 to our array:A12345 = copy(A)\nA12345[1:5, [1,2,end]] .= 12345 # replace some values with `12345`\nA12345 # Let\'s have a look at the new array with NaN values\n\n# output\n\n10×10 Array{Float64,2}:\n 12345.0  12345.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0  12345.0\n 12345.0  12345.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0  12345.0\n 12345.0  12345.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0  12345.0\n 12345.0  12345.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0  12345.0\n 12345.0  12345.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0  12345.0\n     6.0     12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0     60.0\n     7.0     14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0     70.0\n     8.0     16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0     80.0\n     9.0     18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0     90.0\n    10.0     20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0    100.0Now, we can inpaint the 12345 values viainpaint(A12345, 12345)\n\n# output\n\n10×10 Array{Float64,2}:\n  1.0   2.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0   10.0\n  2.0   4.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0   20.0\n  3.0   6.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0   30.0\n  4.0   8.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0   40.0\n  5.0  10.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0   50.0\n  6.0  12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0  14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0  16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0  18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
+},
+
+{
+    "location": "#Inpainting-any-value-x-such-that-f(x)-true-1",
+    "page": "Inpaintings.jl Documentation",
+    "title": "Inpainting any value x such that f(x) == true",
+    "category": "section",
+    "text": "Another approach is to inpaint values for which a function f returns true. f must be a function that has one scalar argument and that returns a boolean. For example, we can reproduces the examples above by using the functions ismissing, isnan, or x -> x == 12345. Let\'s assume for some reason all the values of A that are above 10 were too high:A10 = copy(A)\nA10[findall(A10 .> 10)] .= 1e3\nA10\n\n# output\n\n10×10 Array{Float64,2}:\n  1.0     2.0     3.0     4.0     5.0     6.0     7.0     8.0     9.0    10.0\n  2.0     4.0     6.0     8.0    10.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  3.0     6.0     9.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  4.0     8.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  5.0    10.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  6.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  7.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  8.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n  9.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0\n 10.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0  1000.0We can inpaint those values viainpaint(x -> x .> 10, A10)\n\n# output\n\n10×10 Array{Float64,2}:\n  1.0   2.0   3.0   4.0   5.0   6.0   7.0   8.0   9.0   10.0\n  2.0   4.0   6.0   8.0  10.0  12.0  14.0  16.0  18.0   20.0\n  3.0   6.0   9.0  12.0  15.0  18.0  21.0  24.0  27.0   30.0\n  4.0   8.0  12.0  16.0  20.0  24.0  28.0  32.0  36.0   40.0\n  5.0  10.0  15.0  20.0  25.0  30.0  35.0  40.0  45.0   50.0\n  6.0  12.0  18.0  24.0  30.0  36.0  42.0  48.0  54.0   60.0\n  7.0  14.0  21.0  28.0  35.0  42.0  49.0  56.0  63.0   70.0\n  8.0  16.0  24.0  32.0  40.0  48.0  56.0  64.0  72.0   80.0\n  9.0  18.0  27.0  36.0  45.0  54.0  63.0  72.0  81.0   90.0\n 10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0"
 },
 
 {
