@@ -7,21 +7,17 @@ Inspired by MATLAB's `inpaint_nans`'s (by John d'Errico: [link](https://www.math
 
 # Example
 ```jldoctest
-julia> A = convert(Array{Union{Float64, Missing},2}, (1:5)*(1:5)') ; A[1:2, 1:2] .= missing ; A
-5×5 Array{Union{Missing, Float64},2}:
-  missing    missing   3.0   4.0   5.0
-  missing    missing   6.0   8.0  10.0
- 3.0        6.0        9.0  12.0  15.0
- 4.0        8.0       12.0  16.0  20.0
- 5.0       10.0       15.0  20.0  25.0
+julia> A = convert(Array{Union{Float64, Missing},2}, (1:3)*(1:4)') ; A[1:2, 1:2] .= missing ; A
+3×4 Array{Union{Missing, Float64},2}:
+  missing   missing  3.0   4.0
+  missing   missing  6.0   8.0
+ 3.0       6.0       9.0  12.0
 
 julia> inpaint(A)
-5×5 Array{Union{Missing, Float64},2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Union{Missing, Float64},2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 """
 inpaint(A::VecOrMat{Union{Missing, T}}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(ismissing, A, method=method, cycledims=cycledims)
@@ -34,21 +30,17 @@ Inpaints `NaN` values if the elements of `A` are all float (i.e., `eltype(A) <: 
 # Example
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, 1:2] .= NaN ; A
-5×5 Array{Float64,2}:
- NaN    NaN     3.0   4.0   5.0
- NaN    NaN     6.0   8.0  10.0
-   3.0    6.0   9.0  12.0  15.0
-   4.0    8.0  12.0  16.0  20.0
-   5.0   10.0  15.0  20.0  25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, 1:2] .= NaN ; A
+3×4 Array{Float64,2}:
+ NaN    NaN    3.0   4.0
+ NaN    NaN    6.0   8.0
+   3.0    6.0  9.0  12.0
 
 julia> inpaint(A)
-5×5 Array{Float64,2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 """
 inpaint(A::VecOrMat{T}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(isnan, A, method=method, cycledims=cycledims)
@@ -71,39 +63,31 @@ arbitrary chosen one.
 # Examples
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, 1:2] .= 999 ; A
-5×5 Array{Float64,2}:
- 999.0  999.0   3.0   4.0   5.0
- 999.0  999.0   6.0   8.0  10.0
-   3.0    6.0   9.0  12.0  15.0
-   4.0    8.0  12.0  16.0  20.0
-   5.0   10.0  15.0  20.0  25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, 1:2] .= 999 ; A
+3×4 Array{Float64,2}:
+ 999.0  999.0  3.0   4.0
+ 999.0  999.0  6.0   8.0
+   3.0    6.0  9.0  12.0
 
 julia> inpaint(A, 999)
-5×5 Array{Float64,2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, 1:2] .= NaN ; A
-5×5 Array{Float64,2}:
- NaN    NaN     3.0   4.0   5.0
- NaN    NaN     6.0   8.0  10.0
-   3.0    6.0   9.0  12.0  15.0
-   4.0    8.0  12.0  16.0  20.0
-   5.0   10.0  15.0  20.0  25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, 1:2] .= NaN ; A
+3×4 Array{Float64,2}:
+ NaN    NaN    3.0   4.0
+ NaN    NaN    6.0   8.0
+   3.0    6.0  9.0  12.0
 
 julia> inpaint(A, NaN)
-5×5 Array{Float64,2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 """
 function inpaint(A::VecOrMat{T}, value_to_fill; method=1, cycledims=Int64[]) where T<:AbstractFloat
@@ -122,39 +106,31 @@ Inpaints values of `A` for which `f(A) == true`.
 # Examples
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, 1:2] .= 999 ; A
-5×5 Array{Float64,2}:
- 999.0  999.0   3.0   4.0   5.0
- 999.0  999.0   6.0   8.0  10.0
-   3.0    6.0   9.0  12.0  15.0
-   4.0    8.0  12.0  16.0  20.0
-   5.0   10.0  15.0  20.0  25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, 1:2] .= 999 ; A
+3×4 Array{Float64,2}:
+ 999.0  999.0  3.0   4.0
+ 999.0  999.0  6.0   8.0
+   3.0    6.0  9.0  12.0
 
 julia> inpaint(x -> x == 999, A)
-5×5 Array{Float64,2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, [1, end]] .= NaN ; A
-5×5 Array{Float64,2}:
- NaN     2.0   3.0   4.0  NaN
- NaN     4.0   6.0   8.0  NaN
-   3.0   6.0   9.0  12.0   15.0
-   4.0   8.0  12.0  16.0   20.0
-   5.0  10.0  15.0  20.0   25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, [1, end]] .= NaN ; A
+3×4 Array{Float64,2}:
+ NaN    2.0  3.0  NaN
+ NaN    4.0  6.0  NaN
+   3.0  6.0  9.0   12.0
 
 julia> inpaint(isnan, A)
-5×5 Array{Float64,2}:
- 1.0   2.0   3.0   4.0   5.0
- 2.0   4.0   6.0   8.0  10.0
- 3.0   6.0   9.0  12.0  15.0
- 4.0   8.0  12.0  16.0  20.0
- 5.0  10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 1.0  2.0  3.0   4.0
+ 2.0  4.0  6.0   8.0
+ 3.0  6.0  9.0  12.0
 ```
 
     inpaint(f, A; method=1, cycledims=[])
@@ -162,21 +138,17 @@ julia> inpaint(isnan, A)
 With optional arguments, you can chose the inpainting method and if dimensions are cyclic.
 
 ```jldoctest
-julia> A = float((1:5)*(1:5)') ; A[1:2, [1, end]] .= NaN ; A
-5×5 Array{Float64,2}:
- NaN     2.0   3.0   4.0  NaN
- NaN     4.0   6.0   8.0  NaN
-   3.0   6.0   9.0  12.0   15.0
-   4.0   8.0  12.0  16.0   20.0
-   5.0  10.0  15.0  20.0   25.0
+julia> A = float((1:3)*(1:4)') ; A[1:2, [1, end]] .= NaN ; A
+3×4 Array{Float64,2}:
+ NaN    2.0  3.0  NaN
+ NaN    4.0  6.0  NaN
+   3.0  6.0  9.0   12.0
 
 julia> inpaint(A, cycledims=[2])
-5×5 Array{Float64,2}:
- 2.13971   2.0   3.0   4.0   3.86029
- 3.50735   4.0   6.0   8.0   8.49265
- 3.0       6.0   9.0  12.0  15.0
- 4.0       8.0  12.0  16.0  20.0
- 5.0      10.0  15.0  20.0  25.0
+3×4 Array{Float64,2}:
+ 2.16475  2.0  3.0   2.83525
+ 3.76245  4.0  6.0   6.23755
+ 3.0      6.0  9.0  12.0
 ```
 """
 function inpaint(f, A; method=1, cycledims=Int64[])
