@@ -26,7 +26,7 @@ n = 10
 fullA = float(collect(1:n) * collect(1:n)')
 A = copy(fullA)
 A[1:5, 1:5] .= NaN # replace some values with some NaNs
-B = inpaint_nans(A)
+B = inpaint(A, NaN)
 B ≈ fullA
 
 # output
