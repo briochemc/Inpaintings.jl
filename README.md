@@ -10,9 +10,6 @@
   <a href="https://travis-ci.com/briochemc/Inpaintings.jl">
     <img alt="Build Status" src="https://travis-ci.com/briochemc/Inpaintings.jl.svg?branch=master">
   </a>
-  <a href="https://travis-ci.org/briochemc/Inpaintings.jl">
-    <img alt="Build Status" src="https://travis-ci.org/briochemc/Inpaintings.jl.svg?branch=master">
-  </a>
   <a href='https://coveralls.io/github/briochemc/Inpaintings.jl?branch=master'>
     <img src='https://coveralls.io/repos/github/briochemc/Inpaintings.jl/badge.svg?branch=master' alt='Coverage Status' />
   </a>
