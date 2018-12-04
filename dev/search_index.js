@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Inpaintings.jl Documentation",
     "title": "Usage",
     "category": "section",
-    "text": "Use the package as you would any Julia packageDocTestSetup = quote\n    using Inpaintings\nendThe command inpaint_nans(A) will fill the NaNs of an Array A (that has some NaNs):# Making a test matrix A with some NaNs by replacing values from fullA\nn = 10\nfullA = float(collect(1:n) * collect(1:n)\')\nA = copy(fullA)\nA[1:5, 1:5] .= NaN # replace some values with some NaNs\nB = inpaint_nans(A)\nB ≈ fullA\n\n# output\n\ntrue"
+    "text": "Use the package as you would any Julia packageDocTestSetup = quote\n    using Inpaintings\nendThe command inpaint_nans(A) will fill the NaNs of an Array A (that has some NaNs):# Making a test matrix A with some NaNs by replacing values from fullA\nn = 10\nfullA = float(collect(1:n) * collect(1:n)\')\nA = copy(fullA)\nA[1:5, 1:5] .= NaN # replace some values with some NaNs\nB = inpaint(A, NaN)\nB ≈ fullA\n\n# output\n\ntrue"
 },
 
 {
