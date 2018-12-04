@@ -1,17 +1,15 @@
 """
 inpaint(A::VecOrMat{AbstractFloat})
 """
-inpaint(A::VecOrMat) = inpaint(A, missing)
+inpaint(A::VecOrMat{Union{Missing, T}}) where {T<:AbstractFloat} = inpaint(A, missing)
 
-inpaint(A::VecOrMat, value_to_fill::Missing) = inpaint(ismissing, A)
+inpaint(A::VecOrMat{T}) where {T<:AbstractFloat} = inpaint(A, NaN)
+
+inpaint(A::VecOrMat, ::Missing) = inpaint(ismissing, A)
 
 function inpaint(A::VecOrMat{T}, value_to_fill::Float64) where T<:AbstractFloat
     return if isnan(value_to_fill) 
-        if T == Float64
-            inpaint(isnan, A)
-        else
-            inpaint(isnan, convert.(Float64, A))
-        end
+        inpaint(isnan, A)
     else
         inpaint(x -> x == value_to_fill, A)
     end
