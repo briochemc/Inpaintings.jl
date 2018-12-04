@@ -28,27 +28,44 @@
 
 This package provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication).
 
-Simply put, `inpaint_nans` takes a vector or a matrix `A` as input and fills its `NaN` values by solving a simple (1D or 2D) PDE.
+Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes a vector or a matrix `A` as input and fills its `missing` or `NaN` values by solving a simple (1D or 2D) PDE.
 
 ## Usage: 
 
-Simply apply `inpaint_nans` to your array:
+Simply apply `inpaint` to your array:
 ```julia
-julia> inpaint_nans(A)
+julia> inpaint(A) # will inpaint missing values
 ```
-Or specify the method:
-```julia
-julia> inpaint_nans(A, method)
-```
-where `method` must be either `0`, `1`, or `3` (for now).
 
-With method `1`, you can specify if some dimensions are cyclic via, e.g., 
+If you want to inpaint the `NaN` values of matrix `A`, then you can specify the value that must be inpainted:
 ```julia
-julia> inpaint_nans(A, 1, [1])
+julia> inpaint(A, NaN) # will inpaint NaN values
+```
+
+This syntax also works for other values, e.g.:
+```julia
+julia> inpaint(A, -999) # will inpaint -999 values
+```
+
+You can specify the method via:
+```julia
+julia> inpaint(A, method=n)
+```
+where `n` must be either `0` or `1` (for now).
+
+Alternatively, you can supply a function that returns a boolean to fill `A`
+```julia
+julia> inpaint(f, A)
+```
+where `f` can be, e.g., `ismissing` or `isnan`.
+
+With method `1` (the default), you can specify if some dimensions are cyclic via, e.g., 
+```julia
+julia> inpaint(A, method=1, cycledims=[1])
 ```
 or
 ```julia
-julia> inpaint_nans(A, 1, [1, 2])
+julia> inpaint(A, method=1, cycledims=[1, 2])
 ```
 
 ## Comparison to MATLAB version
@@ -68,7 +85,6 @@ This test checks that inpainting the `NaN` values of a sample matrix defined by 
 
 Suggestions, ideas, issues, and PRs welcome!
 
-- [ ] Add functionality to replace not only `NaN`s but also `nothing`s and `missing`s
 - [ ] improve efficiency
 - [ ] Julian-ify the code
 - [ ] improve documentation in Readme
