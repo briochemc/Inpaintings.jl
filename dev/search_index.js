@@ -25,51 +25,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Inpaintings.inpaint_nans",
+    "location": "#Inpaintings.inpaint-Tuple{Any,Any}",
     "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans",
-    "category": "function",
-    "text": "inpaint_nans(A, method=0)\n\nInpaints NaN values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB\'s inpaint_nans\'s (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. Currently only method 0 is implemented.\n\n\n\n\n\n"
+    "title": "Inpaintings.inpaint",
+    "category": "method",
+    "text": "inpaint(f, A; method=1, cycledims=Int64[])\n\nInpaints values in A that f gives true on by solving a PDE. Inspired by MATLAB\'s inpaint_nans\'s (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.\n\n\n\n\n\n"
 },
 
 {
-    "location": "#Inpaintings.inpaint_nans_method0-Tuple{Array{T,1} where T}",
+    "location": "#Inpaintings.inpaint-Union{Tuple{Union{Array{Union{Missing, T},1}, Array{Union{Missing, T},2}}}, Tuple{T}} where T<:AbstractFloat",
     "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans_method0",
+    "title": "Inpaintings.inpaint",
     "category": "method",
-    "text": "inpaint_nans_method0(A::Vector)\n\nInpaints NaN values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB\'s inpaint_nans\'s method 0 for vectors (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.\n\n\n\n\n\n"
+    "text": "inpaint(A::VecOrMat{AbstractFloat})\n\n\n\n\n\n"
 },
 
 {
-    "location": "#Inpaintings.inpaint_nans_method0-Union{Tuple{Array{T,2}}, Tuple{T}} where T",
+    "location": "#Inpaintings.inpaint_method0-Tuple{Any,Array{T,1} where T}",
     "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans_method0",
+    "title": "Inpaintings.inpaint_method0",
     "category": "method",
-    "text": "inpaint_nans_method0(A::Array{T,2}) where T\n\nInpaints NaN values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB\'s inpaint_nans\'s method 0 for matrices (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for ∇² looks like\n\n            ┌───┐\n            │ 1 │\n            └─┬─┘\n              │\n      ┌───┐ ┌─┴─┐ ┌───┐\n      │ 1 ├─┤-4 ├─┤ 1 │\n      └───┘ └─┬─┘ └───┘\n              │\n            ┌─┴─┐\n            │ 1 │\n            └───┘\n\nThe stencil is not applied at the coreners, but its 1D components,\n\n   ┌───┐\n   │ 1 │\n   └─┬─┘\n     │\n   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐\n   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │\n   └─┬─┘        └───┘ └───┘ └───┘\n     │\n   ┌─┴─┐\n   │ 1 │\n   └───┘\n\nare applied at borders.\n\n\n\n\n\n"
+    "text": "inpaint_method0(f, A::Vector)\n\nInpaints values in A that f gives true on by solving a simple diffusion PDE. The partial differential equation (PDE) is defined by the standard Laplacian, Δ = ∇^2. Inspired by MATLAB\'s inpaint_nans\'s method 0 for vectors (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.\n\n\n\n\n\n"
 },
 
 {
-    "location": "#Inpaintings.inpaint_nans_method1-Union{Tuple{Array{T,2}}, Tuple{T}, Tuple{Array{T,2},Any}} where T",
+    "location": "#Inpaintings.inpaint_method1-Tuple{Any,Array}",
     "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans_method1",
+    "title": "Inpaintings.inpaint_method1",
     "category": "method",
-    "text": "inpaint_nans_method1(A::Array{T,2}) where T\n\nInpaints NaN values by solving a diffusion PDE for the standard Laplacian. Inspired by MATLAB\'s inpaint_nans\'s method 0 for matrices (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for ∇² looks like\n\n            ┌───┐\n            │ 1 │\n            └─┬─┘\n              │\n      ┌───┐ ┌─┴─┐ ┌───┐\n      │ 1 ├─┤-4 ├─┤ 1 │\n      └───┘ └─┬─┘ └───┘\n              │\n            ┌─┴─┐\n            │ 1 │\n            └───┘\n\nThe stencil is not applied at the coreners, but its 1D components,\n\n   ┌───┐\n   │ 1 │\n   └─┬─┘\n     │\n   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐\n   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │\n   └─┬─┘        └───┘ └───┘ └───┘\n     │\n   ┌─┴─┐\n   │ 1 │\n   └───┘\n\nare applied at borders.\n\n\n\n\n\n"
-},
-
-{
-    "location": "#Inpaintings.inpaint_nans_method3-Union{Tuple{Array{T,2}}, Tuple{T}} where T",
-    "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans_method3",
-    "category": "method",
-    "text": "inpaint_nans_method3(A::Array{T,2}) where T\n\nInpaints NaN values by solving a diffusion PDE for ∇⁴: Inspired by MATLAB\'s inpaint_nans\'s method 3 for matrices (by John d\'Errico). The discrete stencil used for ∇⁴ looks like\n\n            ┌───┐\n            │ 1 │\n            └─┬─┘\n              │\n      ┌───┐ ┌─┴─┐ ┌───┐\n      │ 2 ├─┤-8 ├─┤ 2 │\n      └─┬─┘ └─┬─┘ └─┬─┘\n        │     │     │\n┌───┐ ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ ┌───┐\n│ 1 ├─┤-8 ├─┤20 ├─┤-8 ├─┤ 1 │\n└───┘ └─┬─┘ └─┬─┘ └─┬─┘ └───┘\n        │     │     │\n      ┌─┴─┐ ┌─┴─┐ ┌─┴─┐\n      │ 2 ├─┤-8 ├─┤ 2 │\n      └───┘ └─┬─┘ └───┘\n              │\n            ┌─┴─┐\n            │ 1 │\n            └───┘\n\nThe stencil is actually constructed from its 1st order 1D components,\n\n   ┌───┐\n   │ 1 │\n   └─┬─┘\n     │\n   ┌─┴─┐        ┌───┐ ┌───┐ ┌───┐\n   │-2 │   or   │ 1 ├─┤-2 ├─┤ 1 │\n   └─┬─┘        └───┘ └───┘ └───┘\n     │\n   ┌─┴─┐\n   │ 1 │\n   └───┘\n\nwhich are applied at the borders.\n\n\n\n\n\n"
-},
-
-{
-    "location": "#Inpaintings.inpaint_nans_method6-Union{Tuple{Array{T,2}}, Tuple{T}} where T",
-    "page": "Inpaintings.jl Documentation",
-    "title": "Inpaintings.inpaint_nans_method6",
-    "category": "method",
-    "text": "inpaint_nans_method6(A::Array{T,2}) where T\n\nInpaints NaN values by solving a diffusion PDE for a diagonally filled Laplacian:\n\nmathbfD_xy^2 = beginbmatrix0250502505-30502505025endbmatrix\n\nInspired by MATLAB\'s inpaint_nans\'s method 0 for matrices (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.\n\n\n\n\n\n"
+    "text": "inpaint_method1(f, A::Array, cycledims=Int64[])\n\nInpaints values in A that f gives true on by solving a simple diffusion PDE. Default method for inpaint. The partial differential equation (PDE) is defined by the standard Laplacian, Δ = ∇^2. Inspired by MATLAB\'s inpaint_nans\'s method 0 for matrices (by John d\'Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for Δ looks like\n\n      ┌───┐\n      │ 1 │\n      └─┬─┘\n        │\n┌───┐ ┌─┴─┐ ┌───┐\n│ 1 ├─┤-4 ├─┤ 1 │\n└───┘ └─┬─┘ └───┘\n        │\n      ┌─┴─┐\n      │ 1 │\n      └───┘\n\nBy default, the stencil is not applied at the borders. Instead, its 1D component,\n\n┌───┐ ┌───┐ ┌───┐\n│ 1 ├─┤-2 ├─┤ 1 │\n└───┘ └───┘ └───┘\n\nis applied where it fits at the borders. However, the user can supply a list of dimensions that should be considered cyclic. In this case, the sentil will be used also at the borders and \"jump\" to the other side. This is particularly useful for, e.g., world maps with longitudes spanning the entire globe.\n\n\n\n\n\n"
 },
 
 {
