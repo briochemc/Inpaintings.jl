@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Inpaintings.jl Documentation · Inpaintings Documentation</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Inpaintings Documentation</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li class="current"><a class="toctext" href>Inpaintings.jl Documentation</a><ul class="internal"><li><a class="toctext" href="#Usage-1">Usage</a></li><li><a class="toctext" href="#Functions-1">Functions</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Inpaintings.jl Documentation</a></li></ul><a class="edit-page" href="https://github.com/briochemc/Inpaintings.jl/blob/master/docs/src/index.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Inpaintings.jl Documentation</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Inpaintings.jl-Documentation-1" href="#Inpaintings.jl-Documentation-1">Inpaintings.jl Documentation</a></h1><p><a href="https://github.com/briochemc/Inpaintings.jl">Inpaintings.jl</a> provides functions that perform a similar task to MATLAB&#39;s <code>inpaint_nans</code> function.  (MATLAB&#39;s <code>inpaint_nans</code> was originally written by John d&#39;Errico and is available on the MathWorks <a href="https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans">File Exchange website</a>.)</p><p><code>inpaint_nans</code> takes a vector or a matrix as input and fills (&quot;inpaints&quot;) the <code>NaN</code>s by solving a simple 1D or 2D PDE.</p><p>So far <a href="https://github.com/briochemc/Inpaintings.jl">Inpaintings.jl</a> only replicates John d&#39;Errico&#39;s method <code>0</code> well, which is well suited for filling <code>NaN</code>s in a &quot;diffusive&quot; way. Methods <code>1</code> and <code>3</code> are on their way. Other methods will come next.</p><h2><a class="nav-anchor" id="Usage-1" href="#Usage-1">Usage</a></h2><p>Use the package as you would any Julia package</p><p>The command <code>inpaint_nans(A)</code> will fill the <code>NaN</code>s of an Array <code>A</code> (that has some <code>NaN</code>s):</p><pre><code class="language-julia"># Making a test matrix A with some NaNs by replacing values from fullA
+n = 10
+fullA = float(collect(1:n) * collect(1:n)&#39;)
+A = copy(fullA)
+A[1:5, 1:5] .= NaN # replace some values with some NaNs
+B = inpaint(A, NaN)
+B ≈ fullA
+
+# output
+
+true</code></pre><h2><a class="nav-anchor" id="Functions-1" href="#Functions-1">Functions</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint-Tuple{Any,Any}" href="#Inpaintings.inpaint-Tuple{Any,Any}"><code>Inpaintings.inpaint</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint(f, A)</code></pre><p>Inpaints values of <code>A</code> for which <code>f(A) == true</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, 1:2] .= 999 ; A
+5×5 Array{Float64,2}:
+ 999.0  999.0   3.0   4.0   5.0
+ 999.0  999.0   6.0   8.0  10.0
+   3.0    6.0   9.0  12.0  15.0
+   4.0    8.0  12.0  16.0  20.0
+   5.0   10.0  15.0  20.0  25.0
+
+julia&gt; inpaint(x -&gt; x == 999, A)
+5×5 Array{Float64,2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, [1, end]] .= NaN ; A
+5×5 Array{Float64,2}:
+ NaN     2.0   3.0   4.0  NaN
+ NaN     4.0   6.0   8.0  NaN
+   3.0   6.0   9.0  12.0   15.0
+   4.0   8.0  12.0  16.0   20.0
+   5.0  10.0  15.0  20.0   25.0
+
+julia&gt; inpaint(isnan, A)
+5×5 Array{Float64,2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre><pre><code class="language-none">inpaint(f, A; method=1, cycledims=[])</code></pre><p>With optional arguments, you can chose the inpainting method and if dimensions are cyclic.</p><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, [1, end]] .= NaN ; A
+5×5 Array{Float64,2}:
+ NaN     2.0   3.0   4.0  NaN
+ NaN     4.0   6.0   8.0  NaN
+   3.0   6.0   9.0  12.0   15.0
+   4.0   8.0  12.0  16.0   20.0
+   5.0  10.0  15.0  20.0   25.0
+
+julia&gt; inpaint(A, cycledims=[2])
+5×5 Array{Float64,2}:
+ 2.13971   2.0   3.0   4.0   3.86029
+ 3.50735   4.0   6.0   8.0   8.49265
+ 3.0       6.0   9.0  12.0  15.0
+ 4.0       8.0  12.0  16.0  20.0
+ 5.0      10.0  15.0  20.0  25.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L117-L181">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint-Tuple{Union{Array{T,1}, Array{T,2}} where T,Missing}" href="#Inpaintings.inpaint-Tuple{Union{Array{T,1}, Array{T,2}} where T,Missing}"><code>Inpaintings.inpaint</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint(A, missing)</code></pre><p>Inpaints <code>missing</code> values. Should be the same as <code>inpaint(A)</code>.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L56-L61">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint-Union{Tuple{T}, Tuple{Union{Array{T,1}, Array{T,2}},Any}} where T&lt;:AbstractFloat" href="#Inpaintings.inpaint-Union{Tuple{T}, Tuple{Union{Array{T,1}, Array{T,2}},Any}} where T&lt;:AbstractFloat"><code>Inpaintings.inpaint</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint(A, value_to_fill)</code></pre><p>Inpaints <code>value_to_fill</code> values (can be <code>NaN</code>). Useful in the case data was generated by filling missing values with an arbitrary chosen one.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, 1:2] .= 999 ; A
+5×5 Array{Float64,2}:
+ 999.0  999.0   3.0   4.0   5.0
+ 999.0  999.0   6.0   8.0  10.0
+   3.0    6.0   9.0  12.0  15.0
+   4.0    8.0  12.0  16.0  20.0
+   5.0   10.0  15.0  20.0  25.0
+
+julia&gt; inpaint(A, 999)
+5×5 Array{Float64,2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, 1:2] .= NaN ; A
+5×5 Array{Float64,2}:
+ NaN    NaN     3.0   4.0   5.0
+ NaN    NaN     6.0   8.0  10.0
+   3.0    6.0   9.0  12.0  15.0
+   4.0    8.0  12.0  16.0  20.0
+   5.0   10.0  15.0  20.0  25.0
+
+julia&gt; inpaint(A, NaN)
+5×5 Array{Float64,2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L64-L108">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint-Union{Tuple{Union{Array{T,1}, Array{T,2}}}, Tuple{T}} where T&lt;:AbstractFloat" href="#Inpaintings.inpaint-Union{Tuple{Union{Array{T,1}, Array{T,2}}}, Tuple{T}} where T&lt;:AbstractFloat"><code>Inpaintings.inpaint</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint(A)</code></pre><p>Inpaints <code>NaN</code> values if the elements of <code>A</code> are all float (i.e., <code>eltype(A) &lt;: AbstractFloat</code>).</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; A = float((1:5)*(1:5)&#39;) ; A[1:2, 1:2] .= NaN ; A
+5×5 Array{Float64,2}:
+ NaN    NaN     3.0   4.0   5.0
+ NaN    NaN     6.0   8.0  10.0
+   3.0    6.0   9.0  12.0  15.0
+   4.0    8.0  12.0  16.0  20.0
+   5.0   10.0  15.0  20.0  25.0
+
+julia&gt; inpaint(A)
+5×5 Array{Float64,2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L29-L53">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint-Union{Tuple{Union{Array{Union{Missing, T},1}, Array{Union{Missing, T},2}}}, Tuple{T}} where T&lt;:AbstractFloat" href="#Inpaintings.inpaint-Union{Tuple{Union{Array{Union{Missing, T},1}, Array{Union{Missing, T},2}}}, Tuple{T}} where T&lt;:AbstractFloat"><code>Inpaintings.inpaint</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint(A)</code></pre><p>Inpaints <code>missing</code> values if <code>A</code> contains some.</p><p>Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s (by John d&#39;Errico: <a href="https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans">link</a>).</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; A = convert(Array{Union{Float64, Missing},2}, (1:5)*(1:5)&#39;) ; A[1:2, 1:2] .= missing ; A
+5×5 Array{Union{Missing, Float64},2}:
+  missing    missing   3.0   4.0   5.0
+  missing    missing   6.0   8.0  10.0
+ 3.0        6.0        9.0  12.0  15.0
+ 4.0        8.0       12.0  16.0  20.0
+ 5.0       10.0       15.0  20.0  25.0
+
+julia&gt; inpaint(A)
+5×5 Array{Union{Missing, Float64},2}:
+ 1.0   2.0   3.0   4.0   5.0
+ 2.0   4.0   6.0   8.0  10.0
+ 3.0   6.0   9.0  12.0  15.0
+ 4.0   8.0  12.0  16.0  20.0
+ 5.0  10.0  15.0  20.0  25.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L1-L26">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_method0-Tuple{Any,Array{T,1} where T}" href="#Inpaintings.inpaint_method0-Tuple{Any,Array{T,1} where T}"><code>Inpaintings.inpaint_method0</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_method0(f, A::Vector)</code></pre><p>Inpaints values in <code>A</code> that <code>f</code> gives <code>true</code> on by solving a simple diffusion PDE. The partial differential equation (PDE) is defined by the standard Laplacian, <code>Δ = ∇^2</code>. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for vectors (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L191-L198">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.inpaint_method1-Tuple{Any,Array}" href="#Inpaintings.inpaint_method1-Tuple{Any,Array}"><code>Inpaintings.inpaint_method1</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">inpaint_method1(f, A::Array, cycledims=Int64[])</code></pre><p>Inpaints values in <code>A</code> that <code>f</code> gives <code>true</code> on by solving a simple diffusion PDE. Default method for <code>inpaint</code>. The partial differential equation (PDE) is defined by the standard Laplacian, <code>Δ = ∇^2</code>. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s method <code>0</code> for matrices (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans. The discrete stencil used for <code>Δ</code> looks like</p><pre><code class="language-none">      ┌───┐
+      │ 1 │
+      └─┬─┘
+        │
+┌───┐ ┌─┴─┐ ┌───┐
+│ 1 ├─┤-4 ├─┤ 1 │
+└───┘ └─┬─┘ └───┘
+        │
+      ┌─┴─┐
+      │ 1 │
+      └───┘</code></pre><p>By default, the stencil is not applied at the borders. Instead, its 1D component,</p><pre><code class="language-none">┌───┐ ┌───┐ ┌───┐
+│ 1 ├─┤-2 ├─┤ 1 │
+└───┘ └───┘ └───┘</code></pre><p>is applied where it fits at the borders. However, the user can supply a list of dimensions that should be considered cyclic. In this case, the sentil will be used also at the borders and &quot;jump&quot; to the other side. This is particularly useful for, e.g., world maps with longitudes spanning the entire globe.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L240-L272">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="Inpaintings.list_neighbors-Tuple{Any,Any,Any}" href="#Inpaintings.list_neighbors-Tuple{Any,Any,Any}"><code>Inpaintings.list_neighbors</code></a> — <span class="docstring-category">Method</span>.</div><div><div><pre><code class="language-none">list_neighbors(A, idx, neighbors)</code></pre><p>Lists all the neighbors of the indices in <code>idx</code> in Array <code>A</code>. Neighbors already in <code>idx</code> are accepted. The argument <code>neighnors</code> contains a list of the neighbors about the origin coordinate <code>(0, 0, ...)</code>. In other words, it is a <code>Vector</code> of <code>CartesianIndex</code> such that the direct neighbors of index <code>i</code> are given by <code>i + n for n in neighbors</code>. Inspired by MATLAB&#39;s <code>inpaint_nans</code>&#39;s <code>identify_neighbors</code> (by John d&#39;Errico). See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.</p></div></div><a class="source-link" target="_blank" href="https://github.com/briochemc/Inpaintings.jl/blob/4ddec0bb6b155d5a91b02b661a39dea29022c125/src/inpaint.jl#L223-L234">source</a></section><footer><hr/></footer></article></body></html>
