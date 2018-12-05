@@ -20,7 +20,7 @@ julia> inpaint(A)
  3.0  6.0  9.0  12.0
 ```
 """
-inpaint(A::VecOrMat{Union{Missing, T}}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(ismissing, A, method=method, cycledims=cycledims)
+inpaint(A::AbstractArray{Union{Missing, T}}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(ismissing, A, method=method, cycledims=cycledims)
 
 """
     inpaint(A)
@@ -43,7 +43,7 @@ julia> inpaint(A)
  3.0  6.0  9.0  12.0
 ```
 """
-inpaint(A::VecOrMat{T}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(isnan, A, method=method, cycledims=cycledims)
+inpaint(A::AbstractArray{T}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = inpaint(isnan, A, method=method, cycledims=cycledims)
 
 """
     inpaint(A, missing)
@@ -51,7 +51,7 @@ inpaint(A::VecOrMat{T}; method=1, cycledims=Int64[]) where {T<:AbstractFloat} = 
 Inpaints `missing` values.
 Should be the same as `inpaint(A)`.
 """
-inpaint(A::VecOrMat, ::Missing; method=1, cycledims=Int64[]) = inpaint(ismissing, A, method=method, cycledims=cycledims)
+inpaint(A::AbstractArray, ::Missing; method=1, cycledims=Int64[]) = inpaint(ismissing, A, method=method, cycledims=cycledims)
 
 """
     inpaint(A, value_to_fill)
@@ -90,7 +90,7 @@ julia> inpaint(A, NaN)
  3.0  6.0  9.0  12.0
 ```
 """
-function inpaint(A::VecOrMat{T}, value_to_fill; method=1, cycledims=Int64[]) where T<:AbstractFloat
+function inpaint(A::AbstractArray{T}, value_to_fill; method=1, cycledims=Int64[]) where T<:AbstractFloat
     return if isnan(value_to_fill) 
         inpaint(isnan, A, method=method, cycledims=cycledims)
     else
@@ -159,39 +159,6 @@ function inpaint(f, A; method=1, cycledims=Int64[])
     end
 end
 
-
-"""
-    inpaint_method0(f, A::Vector)
-
-Inpaints values in `A` that `f` gives `true` on by solving a simple diffusion PDE.
-The partial differential equation (PDE) is defined by the standard Laplacian, `Δ = ∇^2`.
-Inspired by MATLAB's `inpaint_nans`'s method `0` for vectors (by John d'Errico).
-See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
-"""
-function inpaint_method0(f, A::Vector)
-    i_unknown = findall(@. f(A))
-    i_known = findall(@. !f(A))
-
-    # The Laplacian is applied to the non-NaN neighbors
-    iwork = unique(sort([i_unknown..., (i_unknown .- 1)..., (i_unknown .+ 1)...]))
-    iwork = iwork[findall(1 .< iwork .< length(A))]
-    nw = length(iwork)
-    u = collect(1:nw)
-
-    # Build the Laplacian (not the fastest way but easier-to-read code)
-    Δ =  sparse(u, iwork     , -2.0, nw, length(A))
-    Δ += sparse(u, iwork .- 1, +1.0, nw, length(A))
-    Δ += sparse(u, iwork .+ 1, +1.0, nw, length(A))
-
-    # knowns to right hand side
-    rhs = -Δ[:, i_known] * A[i_known]
-
-    # and solve...
-    B = copy(A)
-    B[i_unknown] .= Δ[:, i_unknown] \ rhs
-    return B
-end
-
 """
     list_neighbors(A, idx, neighbors)
 
@@ -208,6 +175,7 @@ function list_neighbors(R, idx, neighbors)
     out = [i + n for i in idx for n in neighbors if i + n ∈ R]
     out = sort(unique([out; idx]))
 end
+list_neighbors(R, idx::Vector{Int64}, neighbors) = list_neighbors(R, CartesianIndex.(idx), neighbors)
 
 """
     inpaint_method1(f, A::Array, cycledims=Int64[])
@@ -247,14 +215,11 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
     I_known = findall(@. !f(A))
 
     # horizontal and vertical neighbors only
-    N1 = CartesianIndices(size(A))[2,1] - CartesianIndices(size(A))[1,1]
-    N2 = CartesianIndices(size(A))[1,2] - CartesianIndices(size(A))[1,1]
-    N1′ = CartesianIndices(size(A))[end,1] - CartesianIndices(size(A))[1,1]
-    N2′ = CartesianIndices(size(A))[1,end] - CartesianIndices(size(A))[1,1]
-    neighbors = [N1, -N1, N2, -N2]
+    Ns = [CartesianIndex(ntuple(x -> x == d ? 1 : 0, ndims(A))) for d in 1:ndims(A)]
+    N′s = [CartesianIndex(ntuple(x -> x == d ? size(A,d) - 1 : 0, ndims(A))) for d in 1:ndims(A)]
+    neighbors = [Ns; -Ns]
     for d in cycledims # Add neighbors in cyclic case
-        neighbors = push!(neighbors, (N1′, N2′)[d])
-        neighbors = push!(neighbors, -((N1′, N2′)[d]))
+        neighbors = push!(neighbors, N′s[d], -N′s[d])
     end
 
     # list of strict neighbors
@@ -266,8 +231,8 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
     nA = length(A)
     Δ = sparse([], [], Vector{Float64}(), nA, nA)
 
-    for iN in 1:2
-        N = (N1, N2)[iN]
+    for iN in 1:ndims(A)
+        N = Ns[iN]
         # R′ is the ranges of indices without one of the borders
         R′ = CartesianIndices(size(A) .- 2 .* N.I)
         R′ = [r + N for r in R′]
@@ -282,8 +247,8 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
     end
 
     for d in cycledims # Add Laplacian along border if cyclic along dimension `d`
-        N = (N1, N2)[d]    # Usual neighbor
-        N′ = (N1′, N2′)[d] # Neighbor across the border
+        N = Ns[d]    # Usual neighbor
+        N′ = N′s[d] # Neighbor across the border
         n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
         n′ = LinearIndices(size(A))[first(R) + N′] - LinearIndices(size(A))[first(R)]
         R′₊ = [r for r in R if r + N ∉ R] # One border
