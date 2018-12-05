@@ -80,9 +80,8 @@ Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https:
 - [ ] method `3`
 - [ ] method `4`
 - [ ] method `5`
-In the future, I will try to implement `inpaint_nans`'s method `4`.
 
-There is currently one test checking that the this Julia implementation of `inpaint` matches MATLAB's `inpaint_nans`..
+In the future, it is likely that only `inpaint_nans`'s method `4` (the spring analogy) will be additionally implemented.
 
 ## TODOs
 
