@@ -25,7 +25,7 @@
 
 This package provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication).
 
-Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes a vector or a matrix `A` as input and fills its `missing` or `NaN` values by solving a simple (1D or 2D) PDE.
+Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes an array `A` as input and fills its `missing` or `NaN` values by solving a simple *n*-dimensional PDE.
 
 ## Usage: 
 
@@ -34,7 +34,7 @@ Simply apply `inpaint` to your array:
 julia> inpaint(A) # will inpaint missing values
 ```
 
-If you want to inpaint the `NaN` values of matrix `A`, then you can specify the value that must be inpainted:
+If you want to inpaint the `NaN` values of an array `A`, then you can specify the value that must be inpainted:
 ```julia
 julia> inpaint(A, NaN) # will inpaint NaN values
 ```
@@ -75,8 +75,7 @@ Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https:
 - [ ] method `4`
 - [ ] method `5`
 
-There is currently only one test: for method `0` (which gives the same result as method `1`). 
-This test checks that inpainting the `NaN` values of a sample matrix defined by MATLAB's [`peaks`](https://www.mathworks.com/help/matlab/ref/peaks.html) function does so with the same values as MATLAB's version of `inpaint_nans`.
+There is currently one test checking that the this Julia implementation of `inpaint` matches MATLAB's `inpaint_nans`..
 
 ## TODOs
 
@@ -84,6 +83,4 @@ Suggestions, ideas, issues, and PRs welcome!
 
 - [ ] improve efficiency
 - [ ] Julian-ify the code
-- [ ] improve documentation in Readme
-- [ ] Add Documentation examples
 - [ ] Add notebook exampls via Literate.jl

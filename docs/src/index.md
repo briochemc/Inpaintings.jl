@@ -2,7 +2,8 @@
 
 [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication).
 
-Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes a vector or a matrix `A` as input and fills its `missing` or `NaN` values by solving a simple (1D or 2D) PDE.
+Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes an array `A` as input and fills its `missing` or `NaN` values by solving a simple PDE.
+[Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl)'s `inpaint` should work for vectors, matrices, and *n*-dimensional arrays.
 
 ## Usage
 
@@ -236,8 +237,137 @@ inpaint(x -> x .> 10, A10)
  10.0  20.0  30.0  40.0  50.0  60.0  70.0  80.0  90.0  100.0
 ```
 
+### Inpainting in any dimension
 
+`inpaint` should work for vectors, matrices, but also *n*-dimensional arrays.
+For example, the `NaN`s in the following vector `A`:
+```jldoctest vector
+A = float(collect(1:10))
+A[[1, 2, 5, 8]] .= NaN
+A
 
+# output
+
+10-element Array{Float64,1}:
+ NaN
+ NaN
+   3.0
+   4.0
+ NaN
+   6.0
+   7.0
+ NaN
+   9.0
+  10.0
+```
+can be inpainted via the usual syntax
+```jldoctest vector
+inpaint(A)
+
+# output
+
+10-element Array{Float64,1}:
+  1.0
+  2.0
+  3.0
+  4.0
+  5.000000000000002
+  6.0
+  7.0
+  8.000000000000004
+  9.0
+ 10.0
+```
+
+Similarly, this works in *n* dimensions.
+Let's make a 4-dimensional array with some `NaN`s:
+```jldoctest ndims
+dims = (4, 5, 3, 2)
+A = float.(reshape(1:prod(dims), dims))
+A[1:2, 1:2, 1:2, 1:2] .= NaN
+A
+
+# output
+4×5×3×2 Array{Float64,4}:
+[:, :, 1, 1] =
+ NaN    NaN     9.0  13.0  17.0
+ NaN    NaN    10.0  14.0  18.0
+   3.0    7.0  11.0  15.0  19.0
+   4.0    8.0  12.0  16.0  20.0
+
+[:, :, 2, 1] =
+ NaN    NaN    29.0  33.0  37.0
+ NaN    NaN    30.0  34.0  38.0
+  23.0   27.0  31.0  35.0  39.0
+  24.0   28.0  32.0  36.0  40.0
+
+[:, :, 3, 1] =
+ 41.0  45.0  49.0  53.0  57.0
+ 42.0  46.0  50.0  54.0  58.0
+ 43.0  47.0  51.0  55.0  59.0
+ 44.0  48.0  52.0  56.0  60.0
+
+[:, :, 1, 2] =
+ NaN    NaN    69.0  73.0  77.0
+ NaN    NaN    70.0  74.0  78.0
+  63.0   67.0  71.0  75.0  79.0
+  64.0   68.0  72.0  76.0  80.0
+
+[:, :, 2, 2] =
+ NaN    NaN    89.0  93.0   97.0
+ NaN    NaN    90.0  94.0   98.0
+  83.0   87.0  91.0  95.0   99.0
+  84.0   88.0  92.0  96.0  100.0
+
+[:, :, 3, 2] =
+ 101.0  105.0  109.0  113.0  117.0
+ 102.0  106.0  110.0  114.0  118.0
+ 103.0  107.0  111.0  115.0  119.0
+ 104.0  108.0  112.0  116.0  120.0
+```
+
+Now we can inpaint the 4-dimensional `A` with the same syntax:
+```jldoctest ndims
+inpaint(A)
+
+# output
+4×5×3×2 Array{Float64,4}:
+[:, :, 1, 1] =
+ 1.0  5.0   9.0  13.0  17.0
+ 2.0  6.0  10.0  14.0  18.0
+ 3.0  7.0  11.0  15.0  19.0
+ 4.0  8.0  12.0  16.0  20.0
+
+[:, :, 2, 1] =
+ 21.0  25.0  29.0  33.0  37.0
+ 22.0  26.0  30.0  34.0  38.0
+ 23.0  27.0  31.0  35.0  39.0
+ 24.0  28.0  32.0  36.0  40.0
+
+[:, :, 3, 1] =
+ 41.0  45.0  49.0  53.0  57.0
+ 42.0  46.0  50.0  54.0  58.0
+ 43.0  47.0  51.0  55.0  59.0
+ 44.0  48.0  52.0  56.0  60.0
+
+[:, :, 1, 2] =
+ 61.0  65.0  69.0  73.0  77.0
+ 62.0  66.0  70.0  74.0  78.0
+ 63.0  67.0  71.0  75.0  79.0
+ 64.0  68.0  72.0  76.0  80.0
+
+[:, :, 2, 2] =
+ 81.0  85.0  89.0  93.0   97.0
+ 82.0  86.0  90.0  94.0   98.0
+ 83.0  87.0  91.0  95.0   99.0
+ 84.0  88.0  92.0  96.0  100.0
+
+[:, :, 3, 2] =
+ 101.0  105.0  109.0  113.0  117.0
+ 102.0  106.0  110.0  114.0  118.0
+ 103.0  107.0  111.0  115.0  119.0
+ 104.0  108.0  112.0  116.0  120.0
+```
 
 ## Functions
 
