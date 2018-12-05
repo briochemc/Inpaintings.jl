@@ -91,7 +91,7 @@ julia> inpaint(A, NaN)
 ```
 """
 function inpaint(A::AbstractArray{T}, value_to_fill; method=1, cycledims=Int64[]) where T<:AbstractFloat
-    return if isnan(value_to_fill) 
+    return if isnan(value_to_fill)
         inpaint(isnan, A, method=method, cycledims=cycledims)
     else
         inpaint(x -> x == value_to_fill, A, method=method, cycledims=cycledims)
@@ -185,27 +185,13 @@ Default method for `inpaint`.
 The partial differential equation (PDE) is defined by the standard Laplacian, `Δ = ∇^2`.
 Inspired by MATLAB's `inpaint_nans`'s method `0` for matrices (by John d'Errico).
 See https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans.
-The discrete stencil used for `Δ` looks like
-```
-      ┌───┐
-      │ 1 │
-      └─┬─┘
-        │
-┌───┐ ┌─┴─┐ ┌───┐
-│ 1 ├─┤-4 ├─┤ 1 │
-└───┘ └─┬─┘ └───┘
-        │
-      ┌─┴─┐
-      │ 1 │
-      └───┘
-```
-By default, the stencil is not applied at the borders. Instead, its 1D component,
+The discrete 1D stencil used for `Δ` looks like
 ```
 ┌───┐ ┌───┐ ┌───┐
 │ 1 ├─┤-2 ├─┤ 1 │
 └───┘ └───┘ └───┘
 ```
-is applied where it fits at the borders.
+and is applied where it fits at the borders in all dimensions.
 However, the user can supply a list of dimensions that should be considered cyclic.
 In this case, the sentil will be used also at the borders and "jump" to the other side.
 This is particularly useful for, e.g., world maps with longitudes spanning the entire globe.
@@ -214,47 +200,51 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
     I_unknown = findall(@. f(A))
     I_known = findall(@. !f(A))
 
-    # horizontal and vertical neighbors only
+    # direct neighbors
     Ns = [CartesianIndex(ntuple(x -> x == d ? 1 : 0, ndims(A))) for d in 1:ndims(A)]
-    N′s = [CartesianIndex(ntuple(x -> x == d ? size(A,d) - 1 : 0, ndims(A))) for d in 1:ndims(A)]
     neighbors = [Ns; -Ns]
+    # Add neighbors on opposite border if dimensions are cyclic
+    N′s = [CartesianIndex(ntuple(x -> x == d ? size(A,d) - 1 : 0, ndims(A))) for d in 1:ndims(A)]
     for d in cycledims # Add neighbors in cyclic case
         neighbors = push!(neighbors, N′s[d], -N′s[d])
     end
 
-    # list of strict neighbors
+    # "working" list: the indices of all unkowns and their neighbors
     R = CartesianIndices(size(A))
     Iwork = list_neighbors(R, I_unknown, neighbors)
     iwork = LinearIndices(size(A))[Iwork]
-    # Preallocate the Laplacian (not the fastest way but easier-to-read code)
 
+    # Preallocate the Laplacian (not the fastest way but easier-to-read code)
     nA = length(A)
     Δ = sparse([], [], Vector{Float64}(), nA, nA)
 
-    for iN in 1:ndims(A)
-        N = Ns[iN]
-        # R′ is the ranges of indices without one of the borders
+    # Fill the Laplacian within the borders
+    for d in 1:ndims(A)
+        N = Ns[d]
+        # R′ is the range of indices without the borders in dimension `d`
         R′ = CartesianIndices(size(A) .- 2 .* N.I)
         R′ = [r + N for r in R′]
-
+        # Convert to linear indices to build the Laplacian
         u = vec(LinearIndices(size(A))[R′])
         n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
-
         # Build the Laplacian (not the fastest way but easier-to-read code)
         Δ += sparse(u, u     , -2.0, nA, nA)
         Δ += sparse(u, u .- n, +1.0, nA, nA)
         Δ += sparse(u, u .+ n, +1.0, nA, nA)
     end
 
-    for d in cycledims # Add Laplacian along border if cyclic along dimension `d`
-        N = Ns[d]    # Usual neighbor
-        N′ = N′s[d] # Neighbor across the border
+    # Add Laplacian along border if cyclic along dimension `d`
+    for d in cycledims
+        N = Ns[d]   # usual neighbor
+        N′ = N′s[d] # neighbor on the opposite border
+        R′₊ = [r for r in R if r + N ∉ R] # one border
+        R′₋ = [r for r in R if r - N ∉ R] # the opposite border
+        # Convert to linear indices to build the Laplacian
         n = LinearIndices(size(A))[first(R) + N] - LinearIndices(size(A))[first(R)]
         n′ = LinearIndices(size(A))[first(R) + N′] - LinearIndices(size(A))[first(R)]
-        R′₊ = [r for r in R if r + N ∉ R] # One border
-        R′₋ = [r for r in R if r - N ∉ R] # The other border
         u₊ = LinearIndices(size(A))[R′₊]
         u₋ = LinearIndices(size(A))[R′₋]
+        # Add to the Laplacian
         Δ += sparse(u₊, u₊      , -2.0, nA, nA)
         Δ += sparse(u₊, u₊ .- n , +1.0, nA, nA)
         Δ += sparse(u₊, u₊ .- n′, +1.0, nA, nA)
@@ -263,14 +253,14 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
         Δ += sparse(u₋, u₋ .+ n′, +1.0, nA, nA)
     end
 
-    # Use Linear indices to access the sparse Laplacian
+    # Use linear indices to access the sparse Laplacian
     i_unknown = LinearIndices(size(A))[I_unknown]
     i_known = LinearIndices(size(A))[I_known]
 
-    # knowns to right hand side
+    # Place the knowns to right hand side
     rhs = -Δ[iwork, i_known] * A[i_known]
 
-    # and solve...
+    # Solve for the unknowns
     B = copy(A)
     B[i_unknown] .= Δ[iwork, i_unknown] \ rhs
     return B
