@@ -28,11 +28,18 @@
 
 This package provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication).
 
-Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes an array `A` as input and inpaints its `missing` or `NaN` values by solving a simple *n*-dimensional PDE.
+Simply put, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a simple `inpaint` function, which takes an array `A` as input and inpaints its `missing` values by solving a simple *n*-dimensional PDE.
+The `inpaint` function can also be used to inpaint `NaN`s or any other values, thanks to the syntax described below and in the [documentation](https://briochemc.github.io/Inpaintings.jl/stable).
 
 ## Usage: 
 
-Simply apply `inpaint` to your array:
+Like every Julia package you must first add it via `]add Inpaintings`.
+And every time you want to use [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl), you must start with
+```julia
+julia> using Inpaintings
+```
+
+In order to `inpaint` an array `A`'s `missing` values, simply apply `inpaint` to your array:
 ```julia
 julia> inpaint(A) # will inpaint missing values
 ```
