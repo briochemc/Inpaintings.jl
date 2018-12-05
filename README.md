@@ -1,6 +1,9 @@
 # Inpaintings.jl
 
 <p>
+  <a href="https://briochemc.github.io/Inpaintings.jl/dev">
+    <img src=https://img.shields.io/badge/docs-dev-blue.svg>
+  </a>
   <a href="https://briochemc.github.io/Inpaintings.jl/stable">
     <img src=https://img.shields.io/badge/docs-stable-blue.svg>
   </a>
@@ -25,7 +28,7 @@
 
 This package provides a Julia version of MATLAB's `inpaint_nans` function (originally written by John d'Errico, available on the MathWorks [File Exchange website](https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans) and ported here with his authorization by personal communication).
 
-Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes an array `A` as input and fills its `missing` or `NaN` values by solving a simple *n*-dimensional PDE.
+Because Julia supports `missing` values, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a more functional `inpaint` function, which takes an array `A` as input and inpaints its `missing` or `NaN` values by solving a simple *n*-dimensional PDE.
 
 ## Usage: 
 
@@ -33,47 +36,44 @@ Simply apply `inpaint` to your array:
 ```julia
 julia> inpaint(A) # will inpaint missing values
 ```
+The array to be inpainted can be a vector, a matrix, or even an *n*-dimensional array. 
 
-If you want to inpaint the `NaN` values of an array `A`, then you can specify the value that must be inpainted:
+If your array `A` has some `NaN` values and is filled with floats otherwise, then
 ```julia
-julia> inpaint(A, NaN) # will inpaint NaN values
+julia> inpaint(A) # will inpaint NaN values
 ```
 
-This syntax also works for other values, e.g.:
+[Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to inpaint any specified value via
 ```julia
 julia> inpaint(A, -999) # will inpaint -999 values
 ```
+(The value to inpaint can be specified as `NaN` or `missing`, too!)
 
-You can specify the method via:
-```julia
-julia> inpaint(A, method=n)
-```
-where `n` must be either `0` or `1` (for now).
-
-Alternatively, you can supply a function that returns a boolean to fill `A`
+Alternatively, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) also provides a syntax taking a boolean function `f` as an argument before the array (`f` will be applied to all the elements of the array and must return a boolean).
 ```julia
 julia> inpaint(f, A)
 ```
-where `f` can be, e.g., `ismissing` or `isnan`.
+In this case, the values of `A` for which `f` returns `true` will be inpainted.
+(For example, `f` can be, e.g., `ismissing` or `isnan`, but it can also be `x -> x < 0`.)
 
-With method `1` (the default), you can specify if some dimensions are cyclic via, e.g., 
+Finally, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to allow some dimensitons to be assumed cyclic: 
 ```julia
-julia> inpaint(A, method=1, cycledims=[1])
+julia> inpaint(A, cycledims=[1]) # will inpaint A with dimension 1 as cyclic
 ```
-or
-```julia
-julia> inpaint(A, method=1, cycledims=[1, 2])
-```
+(The cyclic dimensions must be an array of `Int64` that contains the dimension number of cyclic dimensions.)
+
+See the [docs](https://briochemc.github.io/Inpaintings.jl/stable) if you want to see more examples.
 
 ## Comparison to MATLAB version
 
 Out of the methods available in MATLAB's `inpaint_nans`, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) currently only implements the following methods:
-- [x] method `0`
+- [ ] method `0`
 - [x] method `1`
 - [ ] method `2`
-- [x] method `3` (beware: not an exact match)
+- [ ] method `3`
 - [ ] method `4`
 - [ ] method `5`
+In the future, I will try to implement `inpaint_nans`'s method `4`.
 
 There is currently one test checking that the this Julia implementation of `inpaint` matches MATLAB's `inpaint_nans`..
 
