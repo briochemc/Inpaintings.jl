@@ -261,7 +261,8 @@ function inpaint_method1(f, A::Array; cycledims=Int64[])
     rhs = -Δ[iwork, i_known] * A[i_known]
 
     # Solve for the unknowns
-    B = copy(A)
+    B = zeros(size(A))
+    B[i_known] .= A[i_known]
     B[i_unknown] .= Δ[iwork, i_unknown] \ rhs
     return B
 end
