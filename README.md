@@ -63,7 +63,7 @@ julia> inpaint(f, A)
 In this case, the values of `A` for which `f` returns `true` will be inpainted.
 (For example, `f` can be, e.g., `ismissing` or `isnan`, but it can also be `x -> x < 0`.)
 
-Finally, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to allow some dimensitons to be assumed cyclic: 
+Finally, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to allow some dimensions to be assumed cyclic: 
 ```julia
 julia> inpaint(A, cycledims=[1]) # will inpaint A with dimension 1 as cyclic
 ```
