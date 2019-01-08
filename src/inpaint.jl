@@ -153,7 +153,6 @@ julia> inpaint(A, cycledims=[2])
 """
 function inpaint(f, A; method=1, cycledims=Int64[])
     return @match method begin
-        0 => inpaint_method0(A)
         1 => inpaint_method1(f, A, cycledims=cycledims) # Default
         _ => error("Method $method not available yet. Suggest it on Github!")
     end
