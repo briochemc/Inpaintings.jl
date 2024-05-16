@@ -1,23 +1,17 @@
 # Inpaintings.jl
 
 <p>
-  <a href="https://briochemc.github.io/Inpaintings.jl/dev">
-    <img src=https://img.shields.io/badge/docs-dev-blue.svg>
+  <a href="https://github.com/briochemc/Inpaintings.jl/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/briochemc/Inpaintings.jl/mac.yml?label=OSX&logo=Apple&logoColor=white&style=flat-square">
   </a>
-  <a href="https://briochemc.github.io/Inpaintings.jl/stable">
-    <img src=https://img.shields.io/badge/docs-stable-blue.svg>
+  <a href="https://github.com/briochemc/Inpaintings.jl/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/briochemc/Inpaintings.jl/linux.yml?label=Linux&logo=Linux&logoColor=white&style=flat-square">
   </a>
-  <a href="https://ci.appveyor.com/project/briochemc/Inpaintings-jl">
-    <img src=https://ci.appveyor.com/api/projects/status/udbwakr621jbyvj1?svg=true>
-  </a>
-  <a href="https://travis-ci.com/briochemc/Inpaintings.jl">
-    <img alt="Build Status" src="https://travis-ci.com/briochemc/Inpaintings.jl.svg?branch=master">
-  </a>
-  <a href='https://coveralls.io/github/briochemc/Inpaintings.jl?branch=master'>
-    <img src='https://coveralls.io/repos/github/briochemc/Inpaintings.jl/badge.svg?branch=master' alt='Coverage Status' />
+  <a href="https://github.com/briochemc/Inpaintings.jl/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/briochemc/Inpaintings.jl/windows.yml?label=Windows&logo=Windows&logoColor=white&style=flat-square">
   </a>
   <a href="https://codecov.io/gh/briochemc/Inpaintings.jl">
-    <img src="https://codecov.io/gh/briochemc/Inpaintings.jl/branch/master/graph/badge.svg" />
+    <img src="https://img.shields.io/codecov/c/github/briochemc/Inpaintings.jl/master?label=Codecov&logo=codecov&logoColor=white&style=flat-square">
   </a>
   <a href="https://github.com/briochemc/Inpaintings.jl/blob/master/LICENSE">
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg">
@@ -31,7 +25,7 @@ This package provides a Julia version of MATLAB's `inpaint_nans` function (origi
 Simply put, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a simple `inpaint` function, which takes an array `A` as input and inpaints its `missing` values by solving a simple *n*-dimensional PDE.
 The `inpaint` function can also be used to inpaint `NaN`s or any other values, thanks to the syntax described below and in the [documentation](https://briochemc.github.io/Inpaintings.jl/stable).
 
-## Usage: 
+## Usage:
 
 Like every Julia package you must first add it via `]add Inpaintings`.
 And every time you want to use [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl), you must start with
@@ -43,7 +37,7 @@ In order to `inpaint` an array `A`'s `missing` values, simply apply `inpaint` to
 ```julia
 julia> inpaint(A) # will inpaint missing values
 ```
-The array to be inpainted can be a vector, a matrix, or even an *n*-dimensional array. 
+The array to be inpainted can be a vector, a matrix, or even an *n*-dimensional array.
 
 If your array `A` has some `NaN` values and is filled with floats otherwise, then
 ```julia
@@ -63,7 +57,7 @@ julia> inpaint(f, A)
 In this case, the values of `A` for which `f` returns `true` will be inpainted.
 (For example, `f` can be, e.g., `ismissing` or `isnan`, but it can also be `x -> x < 0`.)
 
-Finally, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to allow some dimensions to be assumed cyclic: 
+Finally, [Inpaintings.jl](https://github.com/briochemc/Inpaintings.jl) provides a syntax to allow some dimensions to be assumed cyclic:
 ```julia
 julia> inpaint(A, cycledims=[1]) # will inpaint A with dimension 1 as cyclic
 ```
